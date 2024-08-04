@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import React from 'react';
+import Navbar from '../components/Navbar/Navbar';
 
 
 const Settings: React.FC = () => {
@@ -15,13 +16,7 @@ const Settings: React.FC = () => {
         <div className="w-full h-screen flex flex-col items-center bg-white">
             {/* Navigation Bar */}
             <div className="w-full h-[100px] bg-gray-300 flex justify-between items-center px-4">
-                <div className="w-10 h-10 bg-gray-400"></div> {/* Placeholder for logo */}
-                <div className="flex space-x-8 text-black text-lg">
-                    <button onClick={() => router.push('/dashboard')}>Dashboard</button>
-                    <button>Completed</button>
-                    <button onClick={() => router.push('/settings')}>Settings</button>
-                </div>
-                <div className="w-10 h-10 bg-gray-400"></div> {/* Placeholder for logout */}
+                <Navbar />
             </div>
             {/* Profile Section */}
             <div className="w-full flex flex-col items-center mt-10">
