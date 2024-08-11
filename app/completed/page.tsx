@@ -1,23 +1,24 @@
-'use client'
- 
-import { useRouter } from 'next/navigation'
-import React from 'react';
+'use client';
+
+import { useRouter } from 'next/navigation';
+import React, { useState } from 'react';
 import Navbar from '../components/Navbar/Navbar';
 
-
-const Dashboard: React.FC = () => {
-
+const Completed: React.FC = () => {
     const router = useRouter();
+    const [completedModules, setCompletedModules] = useState<string[]>([]); // Track completed modules
 
     const modules = [
         { name: "Module A B C", teacher: "A B C Perera", img: "./module.jpg" },
         { name: "Module D E F", teacher: "D E F Perera", img: "./module1.jpg" },
         { name: "Module G H I", teacher: "G H I Perera", img: "./module2.jpg" },
-        { name: "Module J K L", teacher: "J K L Perera", img: "./module3.jpg" },
-        { name: "Module M N O", teacher: "M N O Perera", img: "./module4.jpg" },
-        { name: "Module P Q R", teacher: "P Q R Perera", img: "./module5.jpg" },
     ];
 
+    const handleModuleSubmit = (moduleName: string) => {
+        if (!completedModules.includes(moduleName)) {
+            setCompletedModules([...completedModules, moduleName]);
+        }
+    };
 
     return (
         <div className="w-full h-full bg-white flex flex-col items-center">
@@ -34,14 +35,16 @@ const Dashboard: React.FC = () => {
                             <div className="text-2xl font-semibold">{module.name}</div>
                             <div className="text-sm font-light">{module.teacher}</div>
                         </div>
-                        <button 
+                        <div 
                             className="ml-auto w-8 h-8 bg-green-500 rounded-full flex justify-center items-center"
                             onClick={() => router.push('/modulepage')}
                         >
-                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-black">
-                                <path d="M9 5L16 12L9 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                        </button>
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 text-black">
+    <circle cx="12" cy="12" r="10" fill="#22c55e"/>  {/* Green circle background */}
+    <path d="M9 12L11 14L15 10" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />  {/* White checkmark */}
+</svg>
+
+                        </div>
                         
                     </div>
                 ))}
@@ -50,7 +53,11 @@ const Dashboard: React.FC = () => {
     );
 };
 
-export default Dashboard;
+export default Completed;
+
+
+
+
 
 
 

@@ -7,7 +7,7 @@ const ScorePage: React.FC = () => {
     const router = useRouter();
 
     const handleConfirm = () => {
-        router.push('/settings');
+        router.push('/completed');
     };
 
     return (
