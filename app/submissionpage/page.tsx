@@ -8,7 +8,7 @@ const SubmissionPage: React.FC = () => {
     const router = useRouter();
 
     const handleGoBack = () => {
-        router.push('/question12');
+        router.push('/question10');
     };
 
     const handleSubmit = () => {
