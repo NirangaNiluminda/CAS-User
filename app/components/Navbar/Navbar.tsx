@@ -12,7 +12,7 @@ const Navbar = () => {
     const {user} = useUser();
     // console.log(user);
 
-    const handleLogout = async () => {
+    const handleLogout = async () => { // did not use since there was an issue. please remove this comment after resolve it
         try{
             const response = await axios.get('http://localhost:8000/api/v1/logout-user');
             if(response.status === 200 || response.data.success){
@@ -30,9 +30,9 @@ const Navbar = () => {
     }
 
     return (
-        <div className='w-full h-[100px] bg-gray-300 flex justify-between items-center px-4'>
-            <div className="w-full h-[100px] bg-gray-300 flex justify-between items-center px-4">
-                <div className="w-10 h-10 cursor-pointer">{user?.name}</div> {/* Placeholder for logo */}
+        <div className='w-full h-[100px] flex justify-between items-center px-4 mt-2'>
+            <div className="w-full h-[100px] border-green-500 border-2 rounded-3xl flex justify-between items-center px-4">
+                <div className="w-10 h-10 cursor-pointer" onClick={() => router.push('/settings')}>{user?.name}</div>
                 <div className="flex space-x-8 text-black text-lg">
                     <button onClick={() => router.push('/dashboard')} className='cursor-pointer hover:transform hover:scale-110 transition-transform duration-300'>Dashboard</button>
                     <button onClick={() => router.push('/completed')} className='cursor-pointer hover:transform hover:scale-110 transition-transform duration-300'>Completed</button>

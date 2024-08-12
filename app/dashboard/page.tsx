@@ -21,7 +21,7 @@ const Dashboard: React.FC = () => {
 
     return (
         <div className="w-full h-full bg-white flex flex-col items-center">
-            <div className="w-full h-[100px] bg-gray-300 flex justify-between items-center px-4">
+            <div className="w-full h-[100px] flex justify-between items-center px-4">
                 <Navbar />
             </div>
             <div className="grid grid-cols-3 gap-4 p-4">

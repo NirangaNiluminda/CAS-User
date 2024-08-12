@@ -15,7 +15,7 @@ const Settings: React.FC = () => {
     return (
         <div className="w-full h-screen flex flex-col items-center bg-white">
             {/* Navigation Bar */}
-            <div className="w-full h-[100px] bg-gray-300 flex justify-between items-center px-4">
+            <div className="w-full h-[100px] flex justify-between items-center px-4">
                 <Navbar />
             </div>
             {/* Profile Section */}
