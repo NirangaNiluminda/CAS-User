@@ -1,16 +1,20 @@
 'use client'
 
+import { useUser } from '@/context/UserContext';
 import { useRouter } from 'next/navigation'
-import React from 'react'
+import React, { use } from 'react'
 
 const Navbar = () => {
 
     const router = useRouter();
 
+    const {user} = useUser();
+    // console.log(user);
+
     return (
         <div className='w-full h-[100px] bg-gray-300 flex justify-between items-center px-4'>
             <div className="w-full h-[100px] bg-gray-300 flex justify-between items-center px-4">
-                <div className="w-10 h-10 bg-gray-400"></div> {/* Placeholder for logo */}
+                <div className="w-10 h-10 cursor-pointer">{user?.name}</div> {/* Placeholder for logo */}
                 <div className="flex space-x-8 text-black text-lg">
                     <button onClick={() => router.push('/dashboard')} className='cursor-pointer hover:transform hover:scale-110 transition-transform duration-300'>Dashboard</button>
                     <button onClick={() => router.push('/completed')} className='cursor-pointer hover:transform hover:scale-110 transition-transform duration-300'>Completed</button>

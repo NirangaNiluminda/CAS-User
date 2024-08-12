@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import React, { useState } from 'react';
 import axios from 'axios';
+import { useUser } from '@/context/UserContext';
 
 
 const SignIn = () => {
@@ -17,6 +18,8 @@ const SignIn = () => {
         setFormData({ ...formData, [e.target.id]: e.target.value })
     }
 
+    const {setUser} = useUser();
+
     const handleSignIn = async () => {
         try{
             const response = await axios.post('http://localhost:8000/api/v1/login-user',{
@@ -26,6 +29,7 @@ const SignIn = () => {
 
             if(response.status === 200 || response.data.success){
                 localStorage.setItem('token', response.data.token)
+                setUser(response.data.user)
                 router.push('/dashboard');
             }
             else{
