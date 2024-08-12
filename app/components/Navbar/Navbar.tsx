@@ -3,6 +3,7 @@
 import { useUser } from '@/context/UserContext';
 import { useRouter } from 'next/navigation'
 import React, { use } from 'react'
+import axios from 'axios';
 
 const Navbar = () => {
 
@@ -10,6 +11,23 @@ const Navbar = () => {
 
     const {user} = useUser();
     // console.log(user);
+
+    const handleLogout = async () => {
+        try{
+            const response = await axios.get('http://localhost:8000/api/v1/logout-user');
+            if(response.status === 200 || response.data.success){
+                localStorage.removeItem('token');
+                router.push('/signin');
+            }
+            else{
+                alert('Invalid credentials')
+            }
+        }
+        catch(error){
+            console.error('Error during logout:', error);
+            alert('An error occurred. Please try again.');
+        }
+    }
 
     return (
         <div className='w-full h-[100px] bg-gray-300 flex justify-between items-center px-4'>
@@ -24,7 +42,7 @@ const Navbar = () => {
                     <svg
                         fill="none"
                         viewBox="0 0 24 24"
-                        onClick={() => router.push('/signin')}
+                        onClick={() => router.push('/signin')} // Add the onClick event
                         className='cursor-pointer hover:transform hover:scale-110 transition-transform duration-300'
                     >
                         <path
