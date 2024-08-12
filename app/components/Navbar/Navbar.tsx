@@ -13,7 +13,7 @@ const Navbar = () => {
                 <div className="w-10 h-10 bg-gray-400"></div> {/* Placeholder for logo */}
                 <div className="flex space-x-8 text-black text-lg">
                     <button onClick={() => router.push('/dashboard')} className='cursor-pointer hover:transform hover:scale-110 transition-transform duration-300'>Dashboard</button>
-                    <button className='cursor-pointer hover:transform hover:scale-110 transition-transform duration-300'>Completed</button>
+                    <button onClick={() => router.push('/completed')} className='cursor-pointer hover:transform hover:scale-110 transition-transform duration-300'>Completed</button>
                     <button onClick={() => router.push('/settings')} className='cursor-pointer hover:transform hover:scale-110 transition-transform duration-300'>Settings</button>
                 </div>
                 <div className="w-10 h-10">
