@@ -1,13 +1,42 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import React from 'react';
+import React, { useState } from 'react';
+import axios from 'axios';
 
 
 const SignIn = () => {
     const router = useRouter();
 
+    const [formData, setFormData] = useState({
+        registrationNumber: '',
+        password: '',
+    })
 
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setFormData({ ...formData, [e.target.id]: e.target.value })
+    }
+
+    const handleSignIn = async () => {
+        try{
+            const response = await axios.post('http://localhost:8000/api/v1/login-user',{
+                registrationNumber: formData.registrationNumber,
+                password: formData.password,
+            })
+
+            if(response.status === 200 || response.data.success){
+                localStorage.setItem('token', response.data.token)
+                router.push('/dashboard');
+            }
+            else{
+                alert('Invalid credentials')
+            }
+        }
+        catch(error){
+            console.error('Error during sign in:', error);
+            alert('An error occurred. Please try again.');
+        }
+    }
 
     return (
         <div className='w-full h-screen flex justify-center items-center'>
@@ -18,11 +47,11 @@ const SignIn = () => {
                     <div className="flex gap-[86px]">
                         <div className="h-[68px] relative">
                             <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Index</label>
-                            <input type="text" id="index" className="bg-green-200 border border-gray-300 text-black text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 placeholder-black" placeholder="EG/XXXX/XXXX" />
+                            <input type="text" id="registrationNumber" value={formData.registrationNumber} onChange={handleChange} className="bg-green-200 border border-gray-300 text-black text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 placeholder-black" placeholder="EG/XXXX/XXXX" />
                         </div>
                         <div className="h-[68px] relative">
                             <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Password</label>
-                            <input type="password" id="password" className="bg-green-200 border border-gray-300 text-black text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 placeholder-black" placeholder="Password" />
+                            <input type="password" id="password" value={formData.password} onChange={handleChange} className="bg-green-200 border border-gray-300 text-black text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 placeholder-black" placeholder="Password" />
                         </div>
                     </div>
                     <div className="flex justify-between items-center w-full mt-4">
@@ -37,7 +66,7 @@ const SignIn = () => {
                 </div>
                 <button
                     type="button"
-                    onClick={() => router.push('/dashboard')}
+                    onClick={handleSignIn}
                     className="focus:outline-none text-black bg-[#0cdc09] hover:bg-green-800 hover:border hover:border-[#0cdc09] focus:ring-4 focus:ring-green-300 font-bold font-['Inter'] tracking-[3.60px] rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-[#0cdc09] dark:hover:bg-transparent dark:focus:ring-green-800 transform transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-lg"
 
                 >
