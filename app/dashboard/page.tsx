@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import React from 'react';
 import Navbar from '../components/Navbar/Navbar';
+import Image from 'next/image';
 
 
 const Dashboard: React.FC = () => {
@@ -28,7 +29,7 @@ const Dashboard: React.FC = () => {
                 {modules.map((module, index) => (
                     <div key={index} className="p-4 border-2 border-green-500 rounded-lg flex items-center">
                         <div className="relative">
-                            <img className="w-20 h-20 rounded-full" src={module.img} alt={`${module.name} logo`} />
+                            <Image className="w-20 h-20 rounded-full" src={`/module.img`} alt={`${module.name} logo`} width={380} height={380}  />
                         </div>
                         <div className="ml-4">
                             <div className="text-2xl font-semibold">{module.name}</div>

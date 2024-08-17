@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useUser } from '@/context/UserContext';
+import Image from 'next/image';
 
 
 const SignIn = () => {
@@ -46,7 +47,7 @@ const SignIn = () => {
         <div className='w-full h-screen flex justify-center items-center'>
             <div className="w-[830px] h-[640px] flex flex-col justify-center items-center gap-[42px]">
                 <div className="self-stretch h-[25px] text-center text-black text-[32px] font-bold font-['Inter']">Sign in</div>
-                <img className="w-[273px] h-60" src="./SignIn.png" alt='sign in image' />
+                <Image className="w-[273px] h-60" src="/./SignIn.png" alt='sign in image' width={380} height={380}  />
                 <div className="self-stretch flex flex-col justify-center items-center gap-[20px]">
                     <div className="flex gap-[86px]">
                         <div className="h-[68px] relative">
@@ -77,7 +78,7 @@ const SignIn = () => {
                     Sign in
                 </button>
                 <div className="flex flex-row items-center gap-2">
-                    <div className="text-black text-xl font-light font-['Inter']">Don't have an account?</div>
+                    <div className="text-black text-xl font-light font-['Inter']">Don&apos;t have an account?</div>
                     <button
                         onClick={() => router.push('/signup')}
                         className="text-blue-500 hover:underline text-xl font-bold font-['Inter']"

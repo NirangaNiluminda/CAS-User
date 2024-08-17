@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image';
 import { useRouter } from 'next/navigation'
 import React from 'react';
 
@@ -16,10 +17,11 @@ const ModulePage: React.FC = () => {
         <div className="flex justify-center items-center w-screen h-screen bg-white">
             <div className="flex flex-col justify-center items-center gap-12 p-4">
                 <div className="relative">
-                    <img
+                    <Image
                         className="w-56 h-56"
-                        src="./module.jpg"
+                        src="/./module.jpg"
                         alt="Module Logo"
+                        width={380} height={380} 
                     />
                 </div>
                 <div className="text-center text-black text-2xl font-bold font-inter">

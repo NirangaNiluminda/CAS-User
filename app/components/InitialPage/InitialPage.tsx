@@ -1,6 +1,7 @@
 'use client'
 import React from 'react';
 import { useRouter } from 'next/navigation' // Import the useRouter hook
+import Image from 'next/image';
 
 const InitialPage: React.FC = () => {
   const router = useRouter(); // Initialize the useRouter hook
@@ -11,7 +12,7 @@ const InitialPage: React.FC = () => {
         <div className="self-stretch h-[31px] text-center text-black text-[32px] font-extrabold font-['Inter']">
           Getting Started
         </div>
-        <img className="self-stretch h-[373px]" src="./initialPage.jpg" alt="Initial Page" />
+        <Image className="self-stretch h-[373px]" src="/./initialPage.jpg" alt="Initial Page" width={380} height={380} />
         <div className="h-[136px] flex flex-col justify-start items-center gap-3.5">
           <button
             type="button"
