@@ -27,7 +27,7 @@ const SignUp: React.FC = () => {
       if (window.location.hostname === 'localhost') {
         setApiUrl('http://localhost:8000');
       } else {
-        setApiUrl('https://ruhuna.run.place');
+        setApiUrl('http://13.228.36.212');
       }
     }
   }, []);
