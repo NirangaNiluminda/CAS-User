@@ -19,7 +19,7 @@ const ModulePage: React.FC = () => {
                 <div className="relative">
                     <Image
                         className="w-56 h-56"
-                        src="/./module.jpg"
+                        src="/module.jpg"
                         alt="Module Logo"
                         width={380} height={380} 
                     />

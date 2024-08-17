@@ -53,7 +53,7 @@ return (
     <div className='w-full h-screen flex justify-center items-center'>
         <div className="w-[830px] h-[640px] flex flex-col justify-center items-center gap-[42px]">
             <div className="self-stretch h-[25px] text-center text-black text-[32px] font-bold font-['Inter']">Activate Account</div>
-            <Image className="w-[273px] h-60" src="/./SignIn.png" alt='sign in image' width={380} height={380}  />
+            <Image className="w-[273px] h-60" src="/SignIn.png" alt='sign in image' width={380} height={380}  />
             <div className="self-stretch flex flex-col justify-center items-center gap-[20px]">
                 <div className="flex gap-[86px]">
                     <div className="h-[68px] relative">

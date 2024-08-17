@@ -21,7 +21,7 @@ const Settings: React.FC = () => {
             </div>
             {/* Profile Section */}
             <div className="w-full flex flex-col items-center mt-10">
-                <Image className="w-[220px] h-30" src="/./profile.jpg" alt='sign in image' width={380} height={380}  />
+                <Image className="w-[220px] h-30" src="/profile.jpg" alt='sign in image' width={380} height={380}  />
                 <div className="text-center text-black text-lg mt-2">EG/XXXX/XXXX</div>
                 {/* Editable Fields */}
                 <div className="flex flex-col items-center mt-4 space-y-4">
