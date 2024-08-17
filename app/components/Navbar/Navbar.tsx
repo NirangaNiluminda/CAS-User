@@ -2,7 +2,7 @@
 
 import { useUser } from '@/context/UserContext';
 import { useRouter } from 'next/navigation'
-import React, { use } from 'react'
+import React, { use, useEffect, useState } from 'react'
 import axios from 'axios';
 
 const Navbar = () => {
@@ -11,10 +11,21 @@ const Navbar = () => {
 
     const {user} = useUser();
     // console.log(user);
+    const [apiUrl, setApiUrl] = useState('');
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // This will run only on the client side
+      if (window.location.hostname === 'localhost') {
+        setApiUrl('http://localhost:8000');
+      } else {
+        setApiUrl('http://13.228.36.212');
+      }
+    }
+  }, []);
     const handleLogout = async () => { // did not use since there was an issue. please remove this comment after resolve it
         try{
-            const response = await axios.get('http://localhost:8000/api/v1/logout-user');
+            const response = await axios.get(`${apiUrl}/api/v1/logout-user`);
             if(response.status === 200 || response.data.success){
                 localStorage.removeItem('token');
                 router.push('/signin');

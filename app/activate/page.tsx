@@ -25,11 +25,23 @@ const Activate = () => {
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.id]: e.target.value })
     }
+    const [apiUrl, setApiUrl] = useState('');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // This will run only on the client side
+      if (window.location.hostname === 'localhost') {
+        setApiUrl('http://localhost:8000');
+      } else {
+        setApiUrl('http://13.228.36.212');
+      }
+    }
+  }, []);
 
     const handleActivate = async () => {
         console.log(formData.activation_code, formData.activation_token);
         try {
-            const response = await axios.post('http://localhost:8000/api/v1/activate-user', {
+            const response = await axios.post(`${apiUrl}/api/v1/activate-user`, {
                 activation_code: formData.activation_code,
                 activation_token: formData.activation_token,
             })
