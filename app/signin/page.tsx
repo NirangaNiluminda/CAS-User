@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useUser } from '@/context/UserContext';
 import Image from 'next/image';
@@ -20,10 +20,21 @@ const SignIn = () => {
     }
 
     const {setUser} = useUser();
+    const [apiUrl, setApiUrl] = useState('');
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // This will run only on the client side
+      if (window.location.hostname === 'localhost') {
+        setApiUrl('http://localhost:8000');
+      } else {
+        setApiUrl('https://ruhuna.run.place');
+      }
+    }
+  }, []);
     const handleSignIn = async () => {
         try{
-            const response = await axios.post('http://localhost:8000/api/v1/login-user',{
+            const response = await axios.post(`${apiUrl}/api/v1/login-user`,{
                 registrationNumber: formData.registrationNumber,
                 password: formData.password,
             })

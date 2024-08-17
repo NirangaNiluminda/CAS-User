@@ -12,7 +12,7 @@ const InitialPage: React.FC = () => {
         <div className="self-stretch h-[31px] text-center text-black text-[32px] font-extrabold font-['Inter']">
           Getting Started
         </div>
-        <Image className="self-stretch h-[373px]" src="/./initialPage.jpg" alt="Initial Page" width={380} height={380} />
+        <Image className="self-stretch h-[373px]" src="/initialPage.jpg" alt="Initial Page" width={380} height={380} />
         <div className="h-[136px] flex flex-col justify-start items-center gap-3.5">
           <button
             type="button"

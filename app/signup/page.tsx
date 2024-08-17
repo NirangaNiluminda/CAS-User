@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
 const SignUp: React.FC = () => {
@@ -19,7 +19,18 @@ const SignUp: React.FC = () => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.id]: e.target.value })
   }
+  const [apiUrl, setApiUrl] = useState('');
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // This will run only on the client side
+      if (window.location.hostname === 'localhost') {
+        setApiUrl('http://localhost:8000');
+      } else {
+        setApiUrl('https://ruhuna.run.place');
+      }
+    }
+  }, []);
   const handleSignUp = async () => {
     // console.log({
     //   name: formData.name,
@@ -33,7 +44,7 @@ const SignUp: React.FC = () => {
     }
 
     try {
-      const response = await axios.post('http://localhost:8000/api/v1/registration', {
+      const response = await axios.post(`${apiUrl}/api/v1/registration`, {
         name: formData.name,
         email: formData.email,
         password: formData.password,
