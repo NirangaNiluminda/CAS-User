@@ -9,41 +9,53 @@ const Navbar = () => {
 
     const router = useRouter();
 
-    const {user} = useUser();
+    const { user } = useUser();
     // console.log(user);
     const [apiUrl, setApiUrl] = useState('');
+    const [name, setName] = useState('');
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      // This will run only on the client side
-      if (window.location.hostname === 'localhost') {
-        setApiUrl('http://localhost:8000');
-      } else {
-        setApiUrl('http://13.228.36.212');
-      }
-    }
-  }, []);
-    const handleLogout = async () => { // did not use since there was an issue. please remove this comment after resolve it
-        try{
-            const response = await axios.get(`${apiUrl}/api/v1/logout-user`);
-            if(response.status === 200 || response.data.success){
-                localStorage.removeItem('token');
-                router.push('/signin');
-            }
-            else{
-                alert('Invalid credentials')
+    useEffect(() => {
+        if(typeof window !== 'undefined') {
+            setName(sessionStorage.getItem('name') || user?.name || '');
+        }
+    }, [user]);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            // This will run only on the client side
+            if (window.location.hostname === 'localhost') {
+                setApiUrl('http://localhost:8000');
+            } else {
+                setApiUrl('http://13.228.36.212');
             }
         }
-        catch(error){
-            console.error('Error during logout:', error);
-            alert('An error occurred. Please try again.');
-        }
+    }, []);
+    const handleLogout = async () => {
+        localStorage.removeItem('token');
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('name');
+        router.push('/signin');
+        //fix below
+        // try {
+        //     const response = await axios.get(`${apiUrl}/api/v1/logout-user`);
+        //     if (response.status === 200 || response.data.success) {
+
+        //         router.push('/signin');
+        //     }
+        //     else {
+        //         alert('Invalid credentials')
+        //     }
+        // }
+        // catch (error) {
+        //     console.error('Error during logout:', error);
+        //     alert('An error occurred. Please try again.');
+        // }
     }
 
     return (
         <div className='w-full h-[100px] flex justify-between items-center px-4 mt-2'>
             <div className="w-full h-[100px] border-green-500 border-2 rounded-3xl flex justify-between items-center px-4">
-                <div className="w-10 h-10 cursor-pointer" onClick={() => router.push('/settings')}>{user?.name}</div>
+                <div className="w-10 h-10 cursor-pointer" onClick={() => router.push('/settings')}>{name}</div>
                 <div className="flex space-x-8 text-black text-lg">
                     <button onClick={() => router.push('/dashboard')} className='cursor-pointer hover:transform hover:scale-110 transition-transform duration-300'>Dashboard</button>
                     <button onClick={() => router.push('/completed')} className='cursor-pointer hover:transform hover:scale-110 transition-transform duration-300'>Completed</button>
@@ -53,7 +65,7 @@ const Navbar = () => {
                     <svg
                         fill="none"
                         viewBox="0 0 24 24"
-                        onClick={() => router.push('/signin')} // Add the onClick event
+                        onClick={handleLogout} // Add the onClick event
                         className='cursor-pointer hover:transform hover:scale-110 transition-transform duration-300'
                     >
                         <path

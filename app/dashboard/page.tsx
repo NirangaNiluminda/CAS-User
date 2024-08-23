@@ -36,8 +36,8 @@ const Dashboard: React.FC = () => {
                             <div className="text-sm font-light">{module.teacher}</div>
                         </div>
                         <button 
-                            className="ml-auto w-8 h-8 bg-green-500 rounded-full flex justify-center items-center"
-                            onClick={() => router.push('/modulepage')}
+                            className="ml-auto w-8 h-8 bg-green-500 rounded-full flex justify-center items-center hover:bg-transparent hover:border hover:border-green-500 transform transition-all duration-300 ease-in-out hover:translate-x-2"
+                            onClick={() => router.push(`/modulepage`)}
                         >
                             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-black">
                                 <path d="M9 5L16 12L9 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />

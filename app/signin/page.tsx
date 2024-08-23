@@ -15,8 +15,14 @@ const SignIn = () => {
         password: '',
     })
 
+    const [rememberMe, setRememberMe] = useState(false);
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.id]: e.target.value })
+    }
+
+    const handleRememberMeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setRememberMe(e.target.checked);
     }
 
     const {setUser} = useUser();
@@ -40,7 +46,13 @@ const SignIn = () => {
             })
 
             if(response.status === 200 || response.data.success){
-                localStorage.setItem('token', response.data.token)
+                const token = response.data.accessToken; // accesstoken
+                sessionStorage.setItem('name', response.data.user.name);
+                if (rememberMe) {
+                    localStorage.setItem('token', token);
+                } else {
+                    sessionStorage.setItem('token', token);
+                }
                 setUser(response.data.user)
                 router.push('/dashboard');
             }
@@ -72,7 +84,7 @@ const SignIn = () => {
                     </div>
                     <div className="flex justify-between items-center w-full mt-4">
                         <div className="flex items-center">
-                            <input id="default-radio-1" type="radio" value="" name="default-radio" className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" />
+                            <input id="rememberMe" type="radio" checked={rememberMe} onChange={handleRememberMeChange} name="default-radio" className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" />
                             <label className="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Remember Me</label>
                         </div>
                         <div className="flex items-center">

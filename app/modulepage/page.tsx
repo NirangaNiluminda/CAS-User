@@ -12,7 +12,6 @@ const ModulePage: React.FC = () => {
 
 
 
-
     return (
         <div className="flex justify-center items-center w-screen h-screen bg-white">
             <div className="flex flex-col justify-center items-center gap-12 p-4">
