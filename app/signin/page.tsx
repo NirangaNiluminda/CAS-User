@@ -62,7 +62,7 @@ const SignIn = () => {
         }
         catch(error){
             console.error('Error during sign in:', error);
-            alert('An error occurred. Please try again.');
+            alert(`An error occurred. Please try again. ${error}`);
         }
     }
 
