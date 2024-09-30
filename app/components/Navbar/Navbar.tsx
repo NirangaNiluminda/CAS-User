@@ -24,7 +24,7 @@ const Navbar = () => {
         if (typeof window !== 'undefined') {
             // This will run only on the client side
             if (window.location.hostname === 'localhost') {
-                setApiUrl('http://localhost:8000');
+                setApiUrl('http://localhost:3000');
             } else {
                 setApiUrl('http://13.228.36.212');
             }
