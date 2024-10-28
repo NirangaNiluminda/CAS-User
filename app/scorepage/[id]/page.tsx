@@ -1,11 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { useParams } from 'react-router-dom';
 
 const ScorePage: React.FC = () => {
     const router = useRouter();
+    const {id} = useParams();
 
     interface QuizData {
         assignment: {
@@ -27,15 +29,32 @@ const ScorePage: React.FC = () => {
     }
 
     const [quizData, setQuizData] = useState<QuizData | null>(null);
+    const [length, setLength] = useState<number | null>(null); // State to store the length of the questions array
+
+    useEffect(() => {
+        if (id) {
+            fetch(`http://localhost:4000/api/v1/${id}`)
+                .then((response) => response.json())
+                .then((data) => setQuizData(data))
+                .catch((error) => console.error('Error fetching quiz data:', error));
+            
+        }
+        // console.log(studentId); // checking whether the user is logged in or not
+    }, [id]);
 
     const handleConfirm = () => {
         router.push('/completed');
     };
+    console.log(quizData);
+
+    // const length = quizData?.assignment.questions.length;
 
     return (
         <div className="w-full h-screen flex flex-col justify-center items-center bg-white">
             <div className="text-center text-black text-2xl font-bold mb-4">You have got</div>
-            <div className="text-center text-black text-6xl font-bold mb-4">{sessionStorage.getItem('score')}/10</div>
+            <div className="text-center text-black text-6xl font-bold mb-4">
+                {sessionStorage.getItem('score')}/{length ? length : 10}
+            </div>
             <Image className="w-[293px] h-100 mb-6" src="/score.jpg" alt="score image" width={380} height={380}  />
             <button
                 type="button"

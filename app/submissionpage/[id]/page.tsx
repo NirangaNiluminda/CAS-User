@@ -2,10 +2,20 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
-
+import { useUser } from '@/context/UserContext';
+import axios from 'axios';
 const SubmissionPage: React.FC = () => {
     const router = useRouter();
     const { id } = useParams();
+    const { user } = useUser();
+
+    const studentId = user?._id;
+
+    interface Submission {
+        assignmentId: string;
+        studentId: string;
+        score: number;
+    }
 
     interface QuizData {
         assignment: {
@@ -27,6 +37,7 @@ const SubmissionPage: React.FC = () => {
     }
 
     const [quizData, setQuizData] = useState<QuizData | null>(null);
+    const [submission, setSubmission] = useState<Submission | null>(null);
 
     useEffect(() => {
         if (id) {
@@ -35,20 +46,52 @@ const SubmissionPage: React.FC = () => {
                 .then((data) => setQuizData(data))
                 .catch((error) => console.error('Error fetching quiz data:', error));
         }
+        // console.log(studentId); // checking whether the user is logged in or not
     }, [id]);
 
     if (!quizData) {
         return <p>Loading...</p>;
     }
-
     const handleGoBack = () => {
         router.push('/question10');
     };
 
-    const handleSubmit = () => {
-        alert("Are you sure you want to submit?");
-        router.push('/scorepage');
+    const handleSubmit = async () => {
+        if (!window.confirm("Are you sure you want to submit?")) return;
+    
+        const answers = JSON.parse(sessionStorage.getItem('selectedAnswerId') || '[]'); // Parse answers array if stored as JSON
+    
+        const submittingData = {
+            userId: studentId,
+            answers: answers,
+            startTime: new Date().toISOString(), // Set current time dynamically
+        };
+    
+        // console.log(submittingData);
+        // console.log(submittingData);
+        // console.log(studentId);
+    
+        try {
+            console.log(submittingData);
+            const response = await axios.post(`http://localhost:4000/api/v1/${id}/submit`, submittingData, {
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+    
+            if (response.data.success) {
+                alert('Submission successful!');
+                setSubmission(response.data.submission);
+                // console.log(response.data); // submission score checking whether it is working
+                sessionStorage.setItem('score', String(response.data.submission?.score));
+                router.push(`/scorepage/${id}`);
+            }
+        } catch (error) {
+            console.error('Error during submission:', error);
+            alert('There was an error submitting your answers.');
+        }
     };
+    
 
     return (
         <div className="w-screen h-screen flex flex-col items-center bg-white">
