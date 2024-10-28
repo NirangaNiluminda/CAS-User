@@ -13,6 +13,7 @@ const QuizPage = () => {
             questions: [
                 {
                     questionText: string;
+                    _id: string;
                     options: [
                         {
                             text: string;
@@ -34,10 +35,13 @@ const QuizPage = () => {
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
     const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
     const [userAnswers, setUserAnswers] = useState<UserAnswers>({});
+    const [selectedAnswerId, setSelectedAnswerId] = useState<{ questionId: string; selectedOption: string }[]>([]);
     const [shortAnswer, setShortAnswer] = useState<string>('');
 
-    const handleAnswerClick = (index: number) => {
+    const handleAnswerClick = (index: number, questionId: string, selectedOption: string) => {
+        // console.log(id); // check whether actual id is passed or not
         setSelectedAnswer(index);
+        setSelectedAnswerId(prev => [...prev, { questionId, selectedOption }]); // Store the selected answer's ID in the array
     };
 
     const handleShortAnswerChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
@@ -53,7 +57,9 @@ const QuizPage = () => {
 
             if (quizData && quizData.assignment.questions && currentQuestionIndex === quizData.assignment.questions.length - 1) {
                 // Navigate to Submission Page when all questions are completed
-                router.push('/submissionpage');
+                console.log(selectedAnswerId);
+                sessionStorage.setItem('selectedAnswerId', JSON.stringify(selectedAnswerId)); // Store the selected answer IDs in the session storage
+                router.push(`/submissionpage/${id}`);
             } else {
                 // Move to the next question
                 setCurrentQuestionIndex(currentQuestionIndex + 1);
@@ -111,7 +117,7 @@ const QuizPage = () => {
                                         <div
                                             className={`w-4 h-4 rounded-full border border-[#0cdc09] ${selectedAnswer === index ? 'bg-[#0cdc09]' : ''
                                                 }`}
-                                            onClick={() => handleAnswerClick(index)}
+                                            onClick={() => handleAnswerClick(index, quizData.assignment.questions[currentQuestionIndex]._id, answer._id)}
                                         />
                                         <div className="text-black text-base font-normal font-['Inter'] ml-2">{answer.text}</div>
                                     </div>
