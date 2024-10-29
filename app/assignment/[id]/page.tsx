@@ -37,6 +37,7 @@ const QuizPage = () => {
     const [userAnswers, setUserAnswers] = useState<UserAnswers>({});
     const [selectedAnswerId, setSelectedAnswerId] = useState<{ questionId: string; selectedOption: string }[]>([]);
     const [shortAnswer, setShortAnswer] = useState<string>('');
+    const [length, setLength] = useState<number>(1);
 
     const handleAnswerClick = (index: number, questionId: string, selectedOption: string) => {
         // console.log(id); // check whether actual id is passed or not
@@ -49,6 +50,8 @@ const QuizPage = () => {
     };
 
     const handleNext = () => {
+        setLength(quizData?.assignment.questions.length ?? 1);
+        sessionStorage.setItem('length', length.toString());
         if (selectedAnswer !== null || (quizData?.assignment.questions[currentQuestionIndex].options?.length ?? 0) === 0) {
             setUserAnswers(prev => ({
                 ...prev,
