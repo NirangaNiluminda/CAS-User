@@ -1,35 +1,63 @@
-'use client'
-import { useRouter, useParams } from 'next/navigation'; // Use next/navigation in the App Router
+'use client';
+import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import React from 'react';
 
-const Guidelines: React.FC = () => {
+interface QuizData {
+    id: string;
+    assignment: {
+        title: string;
+        questions: {
+            [0]: {
+                password: string;
+                guidelines: string[];
+            };
+        };
+    };
+}
 
+const Guidelines: React.FC = () => {
     const router = useRouter();
-    const { id } = useParams(); // The 'id' corresponds to the dynamic [id] part of the URL
-    console.log(id);
+    const { id } = useParams();
+    const [quizData, setQuizData] = useState<QuizData | null>(null);
+
+    useEffect(() => {
+        if (id) {
+            fetch(`http://localhost:4000/api/v1/${id}`)
+                .then((response) => response.json())
+                .then((data) => {
+                    console.log('Fetched Data:', data); // Debug fetched data
+                    setQuizData(data);
+                })
+                .catch((error) => console.error('Error fetching quiz data:', error));
+        }
+    }, [id]);
+
+    const guidelines =
+        quizData?.assignment.questions?.[0]?.guidelines || []; // Fallback to empty array if undefined
 
     return (
         <div className="w-full max-w-screen-lg h-[768px] pt-[104px] pb-[181px] bg-white flex justify-center items-center mx-auto">
             <div className="flex flex-col justify-center items-center gap-12 w-full px-4">
-                <div className="text-black text-[32px] font-extrabold font-['Inter'] text-center">Guidelines</div>
+                <div className="text-black text-[32px] font-extrabold font-['Inter'] text-center">
+                    Guidelines
+                </div>
                 <div className="flex flex-col justify-center items-center gap-6 w-full">
-                    <div className="flex items-center gap-2 w-full px-4 justify-center">
-                        <div className="w-[15px] h-[15px] bg-[#09a307] rounded-full" />
-                        <div className="text-black text-base font-normal font-['Inter'] text-center">Line 01</div>
-                    </div>
-                    <div className="flex items-center gap-2 w-full px-4 justify-center">
-                        <div className="w-[15px] h-[15px] bg-[#09a307] rounded-full" />
-                        <div className="text-black text-base font-normal font-['Inter'] text-center">Line 02</div>
-                    </div>
-                    <div className="flex items-center gap-2 w-full px-4 justify-center">
-                        <div className="w-[15px] h-[15px] bg-[#09a307] rounded-full" />
-                        <div className="text-black text-base font-normal font-['Inter'] text-center">Line 03</div>
-                    </div>
-                    <div className="flex items-center gap-2 w-full px-4 justify-center">
-                        <div className="w-[15px] h-[15px] bg-[#09a307] rounded-full" />
-                        <div className="text-black text-base font-normal font-['Inter'] text-center">Line 04</div>
-                    </div>
+                    {guidelines.length > 0 ? (
+                        guidelines.map((line, index) => (
+                            <div
+                                key={index}
+                                className="flex items-center gap-2 w-full px-4 justify-center"
+                            >
+                                <div className="w-[15px] h-[15px] bg-[#09a307] rounded-full" />
+                                <div className="text-black text-base font-normal font-['Inter'] text-center">
+                                    {line}
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <div className="text-gray-500 text-base">No guidelines available</div>
+                    )}
                 </div>
                 <button
                     type="button"
@@ -44,8 +72,3 @@ const Guidelines: React.FC = () => {
 };
 
 export default Guidelines;
-
-
-
-
-
