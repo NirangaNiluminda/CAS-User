@@ -10,6 +10,11 @@ interface QuizData {
     id: string;
     assignment: {
         title: string;
+        questions:{
+           [0]:{
+            password:string;
+           }
+        }
     };
     // Add other fields as necessary
 }
@@ -22,16 +27,32 @@ const ModulePage: React.FC = () => {
     const { id } = useParams(); // The 'id' corresponds to the dynamic [id] part of the URL
 
     const [quizData, setQuizData] = useState<QuizData | null>(null);
+    const [password, setPassword] = useState('');
 
     useEffect(() => {
         if (id) {
             // Fetch the quiz data based on the ID
             fetch(`http://localhost:4000/api/v1/${id}`)
                 .then((response) => response.json())
-                .then((data) => setQuizData(data))
+                .then((data) => {
+                    console.log('Fetched Data:', data); // Log the full response
+                    setQuizData(data);
+                })
                 .catch((error) => console.error('Error fetching quiz data:', error));
         }
     }, [id]);
+    
+
+    const handleEnter = () => {
+        const correctPassword = quizData?.assignment.questions[0]?.password; // Adjust for arrays or nesting
+        console.log('Correct Password:', correctPassword);
+        if (password === correctPassword) {
+            router.push(`/guidelines/${id}`);
+        } else {
+            alert('Incorrect Password');
+        }
+    };
+    
 
     return (
         <div className="flex justify-center items-center w-screen h-screen bg-white">
@@ -50,13 +71,21 @@ const ModulePage: React.FC = () => {
                 <div className="relative">
                     <div className="h-[68px] relative">
                         <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Password</label>
-                        <input type="text" id="index" className="bg-green-200 border border-gray-300 text-black text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 placeholder-black" placeholder="XXXX" />
+                        <input
+                            type="text"
+                            id="index"
+                            className="bg-green-200 border border-gray-300 text-black text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 placeholder-black"
+                            placeholder="XXXX"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                        />
                     </div>
+
                 </div>
                 <button
                     type="button"
                     className="focus:outline-none text-black bg-[#0cdc09] hover:bg-green-800 hover:border hover:border-[#0cdc09] focus:ring-4 focus:ring-green-300 font-bold font-['Inter'] tracking-[3.60px] rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-[#0cdc09] dark:hover:bg-transparent dark:focus:ring-green-800 transform transition-transform duration-300 hover:scale-x-110"
-                    onClick={() => router.push(`/guidelines/${id}`)}
+                    onClick={handleEnter}
                 >
                     Enter
                 </button>
