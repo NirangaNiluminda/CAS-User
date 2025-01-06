@@ -25,27 +25,27 @@ const SignIn = () => {
         setRememberMe(e.target.checked);
     }
 
-    const {setUser} = useUser();
+    const { setUser } = useUser();
     const [apiUrl, setApiUrl] = useState('');
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      // This will run only on the client side
-      if (window.location.hostname === 'localhost') {
-        setApiUrl('http://localhost:4000');
-      } else {
-        setApiUrl('http://3.24.136.21');
-      }
-    }
-  }, []);
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            // This will run only on the client side
+            if (window.location.hostname === 'localhost') {
+                setApiUrl('http://localhost:4000');
+            } else {
+                setApiUrl('http://3.106.246.115');
+            }
+        }
+    }, []);
     const handleSignIn = async () => {
-        try{
-            const response = await axios.post(`${apiUrl}/api/v1/login-user`,{
+        try {
+            const response = await axios.post(`${apiUrl}/api/v1/login-user`, {
                 registrationNumber: formData.registrationNumber,
                 password: formData.password,
             })
 
-            if(response.status === 200 || response.data.success){
+            if (response.status === 200 || response.data.success) {
                 const token = response.data.accessToken; // accesstoken
                 sessionStorage.setItem('name', response.data.user.name);
                 if (rememberMe) {
@@ -56,11 +56,11 @@ const SignIn = () => {
                 setUser(response.data.user)
                 router.push('/dashboard');
             }
-            else{
+            else {
                 alert('Invalid credentials')
             }
         }
-        catch(error){
+        catch (error) {
             console.error('Error during sign in:', error);
             alert(`An error occurred. Please try again. ${error}`);
         }
@@ -70,7 +70,7 @@ const SignIn = () => {
         <div className='w-full h-screen flex justify-center items-center'>
             <div className="w-[830px] h-[640px] flex flex-col justify-center items-center gap-[42px]">
                 <div className="self-stretch h-[25px] text-center text-black text-[32px] font-bold font-['Inter']">Sign in</div>
-                <Image className="w-[273px] h-60" src="/SignIn.png" alt='sign in image' width={380} height={380}  />
+                <Image className="w-[273px] h-60" src="/SignIn.png" alt='sign in image' width={380} height={380} />
                 <div className="self-stretch flex flex-col justify-center items-center gap-[20px]">
                     <div className="flex gap-[86px]">
                         <div className="h-[68px] relative">
