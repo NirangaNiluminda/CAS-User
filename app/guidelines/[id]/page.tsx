@@ -8,6 +8,7 @@ interface QuizData {
     assignment: {
         title: string;
         guidelines: string[];
+        timeLimit?: number;
         questions: {
         };
     };
@@ -32,6 +33,9 @@ const Guidelines: React.FC = () => {
 
     const guidelines =
         quizData?.assignment.guidelines || []; // Fallback to empty array if undefined
+    
+    const timeLimit = quizData?.assignment.timeLimit || 0; // Fallback to 0 if undefined
+    localStorage.setItem('timeLimit', timeLimit.toString()); // Store the time limit in the local storage
 
     return (
         <div className="w-full max-w-screen-lg h-[768px] pt-[104px] pb-[181px] bg-white flex justify-center items-center mx-auto">
