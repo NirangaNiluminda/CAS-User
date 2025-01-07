@@ -6,6 +6,8 @@ import { ChangeEvent, useEffect, useState } from 'react';
 const QuizPage = () => {
     const router = useRouter();
     const { id } = useParams(); // The 'id' corresponds to the dynamic [id] part of the URL
+    const timeLimit = localStorage.getItem('timeLimit'); // Retrieve the time limit from the local storage
+    console.log(timeLimit); // Debug the time limit
 
     interface QuizData {
         assignment: {
@@ -49,6 +51,12 @@ const QuizPage = () => {
         setShortAnswer(event.target.value);
     };
 
+    const formatTime = (seconds: number) => {
+        const minutes = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    };
+
     const handleNext = () => {
         setLength(quizData?.assignment.questions.length ?? 1);
         sessionStorage.setItem('length', length.toString());
@@ -85,6 +93,23 @@ const QuizPage = () => {
             setShortAnswer(typeof prevAnswer === 'string' ? prevAnswer : '');
         }
     };
+
+    const [remainingTime, setRemainingTime] = useState<number>(timeLimit ? Number(timeLimit) * 60 : 0);
+
+    useEffect(() => {
+        if (remainingTime > 0) {
+            const timer = setInterval(() => {
+                setRemainingTime((prevTime) => prevTime - 1);
+            }, 1000);
+
+            // Clear the interval when the component unmounts or time runs out
+            return () => clearInterval(timer);
+        } else if (remainingTime === 0) {
+            // Handle time-out logic here (e.g., auto-submit or navigate)
+            console.log("Time's up!");
+        }
+    }, [remainingTime]);
+
 
     useEffect(() => {
         if (id) {
@@ -151,6 +176,15 @@ const QuizPage = () => {
                         >
                             {currentQuestionIndex === quizData.assignment.questions.length - 1 ? 'Submit' : 'Next'}
                         </button>
+                    </div>
+                </div>
+                <div className="absolute top-[130px] right-[10%] border border-black p-4 rounded-lg">
+                    <div className="text-black text-xl font-normal font-['Inter'] mb-2">Time Remaining</div>
+                    <div
+                        className={`text-xl font-['Inter'] ${timeLimit && Number(timeLimit) <= 60 ? 'text-red-500 font-bold' : 'text-black'
+                            }`}
+                    >
+                        {formatTime(remainingTime)}
                     </div>
                 </div>
 
