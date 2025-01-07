@@ -9,12 +9,8 @@ interface QuizData {
     // Define the structure of QuizData here
     id: string;
     assignment: {
+        password:string;
         title: string;
-        questions:{
-           [0]:{
-            password:string;
-           }
-        }
     };
     // Add other fields as necessary
 }
@@ -44,7 +40,8 @@ const ModulePage: React.FC = () => {
     
 
     const handleEnter = () => {
-        const correctPassword = quizData?.assignment.questions[0]?.password; // Adjust for arrays or nesting
+        console.log(quizData);
+        const correctPassword = quizData?.assignment.password; // Adjust for arrays or nesting
         console.log('Correct Password:', correctPassword);
         if (password === correctPassword) {
             router.push(`/guidelines/${id}`);

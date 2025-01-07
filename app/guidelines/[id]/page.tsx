@@ -7,11 +7,8 @@ interface QuizData {
     id: string;
     assignment: {
         title: string;
+        guidelines: string[];
         questions: {
-            [0]: {
-                password: string;
-                guidelines: string[];
-            };
         };
     };
 }
@@ -34,7 +31,7 @@ const Guidelines: React.FC = () => {
     }, [id]);
 
     const guidelines =
-        quizData?.assignment.questions?.[0]?.guidelines || []; // Fallback to empty array if undefined
+        quizData?.assignment.guidelines || []; // Fallback to empty array if undefined
 
     return (
         <div className="w-full max-w-screen-lg h-[768px] pt-[104px] pb-[181px] bg-white flex justify-center items-center mx-auto">
