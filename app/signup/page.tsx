@@ -27,7 +27,8 @@ const SignUp: React.FC = () => {
       if (window.location.hostname === 'localhost') {
         setApiUrl('http://localhost:4000');
       } else {
-        setApiUrl(`${process.env.AWS_URL}`);
+        //setApiUrl(`${process.env.AWS_URL}`);
+        setApiUrl('http://13.211.123.86:3001');
       }
     }
   }, []);

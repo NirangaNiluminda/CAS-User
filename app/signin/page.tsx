@@ -34,7 +34,7 @@ const SignIn = () => {
             if (window.location.hostname === 'localhost') {
                 setApiUrl('http://localhost:4000');
             } else {
-                setApiUrl('http://3.106.246.115');
+                setApiUrl('http://13.211.123.86:3001');
             }
         }
     }, []);
