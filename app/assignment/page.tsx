@@ -182,8 +182,8 @@ const Assignment: React.FC = () => {
         </div>
 
         {/* Timer Section */}
-        <div className="absolute top-[130px] right-[10%] border border-black p-4">
-          <div className="text-black text-xl font-normal font-['Inter'] mb-2">Time Remaining</div>
+        <div className="absolute top-[130px] right-[10%] border border-black p-1 rounded-lg">
+          <div className="text-black text-xl font-normal font-['Inter'] mb-1">Time Remaining</div>
           <div
             className={`text-xl font-['Inter'] ${
               timeLeft <= 60 ? 'text-red-500 font-bold' : 'text-black'
