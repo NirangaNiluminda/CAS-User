@@ -20,8 +20,18 @@ const Guidelines: React.FC = () => {
     const [quizData, setQuizData] = useState<QuizData | null>(null);
 
     useEffect(() => {
+        let apiUrl;
+        // Determine the correct API URL based on the hostname
+        if (typeof window !== 'undefined') {
+            if (window.location.hostname === 'localhost') {
+                apiUrl = 'http://localhost:4000';
+            } else {
+                apiUrl = process.env.NEXT_PUBLIC_DEPLOYMENT_URL;
+                console.log('Deployment URL:', apiUrl);
+            }
+        }
         if (id) {
-            fetch(`http://localhost:4000/api/v1/${id}`)
+            fetch(`${apiUrl}/api/v1/${id}`)
                 .then((response) => response.json())
                 .then((data) => {
                     console.log('Fetched Data:', data); // Debug fetched data
@@ -33,7 +43,7 @@ const Guidelines: React.FC = () => {
 
     const guidelines =
         quizData?.assignment.guidelines || []; // Fallback to empty array if undefined
-    
+
     const timeLimit = quizData?.assignment.timeLimit || 0; // Fallback to 0 if undefined
     localStorage.setItem('timeLimit', timeLimit.toString()); // Store the time limit in the local storage
 

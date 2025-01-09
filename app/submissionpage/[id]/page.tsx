@@ -40,8 +40,18 @@ const SubmissionPage: React.FC = () => {
     const [submission, setSubmission] = useState<Submission | null>(null);
 
     useEffect(() => {
+        let apiUrl;
+        // Determine the correct API URL based on the hostname
+        if (typeof window !== 'undefined') {
+            if (window.location.hostname === 'localhost') {
+                apiUrl = 'http://localhost:4000';
+            } else {
+                apiUrl = process.env.NEXT_PUBLIC_DEPLOYMENT_URL;
+                console.log('Deployment URL:', apiUrl);
+            }
+        }
         if (id) {
-            fetch(`http://localhost:4000/api/v1/${id}`)
+            fetch(`${apiUrl}/api/v1/${id}`)
                 .then((response) => response.json())
                 .then((data) => setQuizData(data))
                 .catch((error) => console.error('Error fetching quiz data:', error));
@@ -72,8 +82,18 @@ const SubmissionPage: React.FC = () => {
         // console.log(studentId);
     
         try {
+            let apiUrl;
+        // Determine the correct API URL based on the hostname
+        if (typeof window !== 'undefined') {
+            if (window.location.hostname === 'localhost') {
+                apiUrl = 'http://localhost:4000';
+            } else {
+                apiUrl = process.env.NEXT_PUBLIC_DEPLOYMENT_URL;
+                console.log('Deployment URL:', apiUrl);
+            }
+        }
             console.log(submittingData);
-            const response = await axios.post(`http://localhost:4000/api/v1/${id}/submit`, submittingData, {
+            const response = await axios.post(`${apiUrl}/api/v1/${id}/submit`, submittingData, {
                 headers: {
                     'Content-Type': 'application/json'
                 }

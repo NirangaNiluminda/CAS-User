@@ -32,8 +32,18 @@ const ScorePage: React.FC = () => {
     const [length, setLength] = useState<number | null>(null); // State to store the length of the questions array
 
     useEffect(() => {
+        let apiUrl;
+        // Determine the correct API URL based on the hostname
+        if (typeof window !== 'undefined') {
+            if (window.location.hostname === 'localhost') {
+                apiUrl = 'http://localhost:4000';
+            } else {
+                apiUrl = process.env.NEXT_PUBLIC_DEPLOYMENT_URL;
+                console.log('Deployment URL:', apiUrl);
+            }
+        }
         if (id) {
-            fetch(`http://localhost:4000/api/v1/${id}`)
+            fetch(`${apiUrl}/api/v1/${id}`)
                 .then((response) => response.json())
                 .then((data) => setQuizData(data))
                 .catch((error) => console.error('Error fetching quiz data:', error));
