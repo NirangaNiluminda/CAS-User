@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { UserProvider } from './../context/UserContext'; // Adjust the path as necessary
+import { QuizProvider } from "@/context/QuizContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -19,7 +20,9 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <UserProvider>
-          {children}
+          <QuizProvider>
+            {children}
+          </QuizProvider>
         </UserProvider>
       </body>
     </html>

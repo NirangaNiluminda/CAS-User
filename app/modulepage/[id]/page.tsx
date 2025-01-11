@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { useRouter, useParams } from 'next/navigation'; // Use next/navigation in the App Router
 import { useEffect, useState } from 'react';
 import React from 'react';
+import { useQuiz } from '@/context/QuizContext';
 
 interface QuizData {
     // Define the structure of QuizData here
@@ -21,9 +22,13 @@ const ModulePage: React.FC = () => {
 
     const router = useRouter();
     const { id } = useParams(); // The 'id' corresponds to the dynamic [id] part of the URL
+    if (typeof id === 'string') {
+        localStorage.setItem('id', id);
+    }
 
     const [quizData, setQuizData] = useState<QuizData | null>(null);
     const [password, setPassword] = useState('');
+    const {setQuiz} = useQuiz();
 
     useEffect(() => {
         let apiUrl;
@@ -43,6 +48,7 @@ const ModulePage: React.FC = () => {
                 .then((data) => {
                     console.log('Fetched Data:', data); // Log the full response
                     setQuizData(data);
+                    setQuiz(data);
                 })
                 .catch((error) => console.error('Error fetching quiz data:', error));
         }
