@@ -8,6 +8,7 @@ import { useParams } from 'react-router-dom';
 const ScorePage: React.FC = () => {
     const router = useRouter();
     const {id} = useParams();
+    const id_temp = localStorage.getItem('id');
 
     interface QuizData {
         assignment: {
@@ -54,7 +55,9 @@ const ScorePage: React.FC = () => {
     }, [id]);
 
     const handleConfirm = () => {
-        router.push('/completed');
+        // console.log(id);
+        console.log(id_temp);
+        router.push(`/correct_answers/${id_temp}`);
     };
     // console.log(quizData);
 
