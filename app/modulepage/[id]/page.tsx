@@ -5,12 +5,23 @@ import { useRouter, useParams } from 'next/navigation'; // Use next/navigation i
 import { useEffect, useState } from 'react';
 import React from 'react';
 import { useQuiz } from '@/context/QuizContext';
+import { useEssay } from '@/context/EssayContext';
 
 interface QuizData {
     // Define the structure of QuizData here
     id: string;
     assignment: {
-        password:string;
+        password: string;
+        title: string;
+    };
+    // Add other fields as necessary
+}
+
+interface EssayData {
+    // Define the structure of EssayData here
+    id: string;
+    essayAssignment: {
+        password: string;
         title: string;
     };
     // Add other fields as necessary
@@ -19,7 +30,8 @@ interface QuizData {
 
 const ModulePage: React.FC = () => {
 
-
+    let isQuiz = false;
+    let isEssay = false;
     const router = useRouter();
     const { id } = useParams(); // The 'id' corresponds to the dynamic [id] part of the URL
     if (typeof id === 'string') {
@@ -28,7 +40,9 @@ const ModulePage: React.FC = () => {
 
     const [quizData, setQuizData] = useState<QuizData | null>(null);
     const [password, setPassword] = useState('');
-    const {setQuiz} = useQuiz();
+    const [essayData, setEssayData] = useState<EssayData | null>(null);
+    const { setEssay } = useEssay();
+    const { setQuiz } = useQuiz();
 
     useEffect(() => {
         let apiUrl;
@@ -42,22 +56,38 @@ const ModulePage: React.FC = () => {
             }
         }
         if (id) {
-            // Fetch the quiz data based on the ID
-            fetch(`${apiUrl}/api/v1/${id}`)
+            // Fetch the data based on the ID for Quiz
+            fetch(`${apiUrl}/api/v1/quiz/${id}`)
                 .then((response) => response.json())
                 .then((data) => {
-                    console.log('Fetched Data:', data); // Log the full response
-                    setQuizData(data);
-                    setQuiz(data);
+                    console.log('Fetched Quiz Data:', data); // Log the full response
+                    if (data.assignment) {
+                        setQuizData(data);
+                        setQuiz(data);
+                        isQuiz = true;
+                    }
                 })
                 .catch((error) => console.error('Error fetching quiz data:', error));
+
+            // Fetch the data based on the ID for Essay
+            fetch(`${apiUrl}/api/v1/essay/${id}`)
+                .then((response) => response.json())
+                .then((data) => {
+                    console.log('Fetched Essay Data:', data); // Log the full response
+                    if (data.essayAssignment) {
+                        setEssayData(data);
+                        setEssay(data);
+                        isEssay = true;
+                    }
+                })
+                .catch((error) => console.error('Error fetching essay data:', error));
         }
     }, [id]);
-    
+
 
     const handleEnter = () => {
         console.log(quizData);
-        const correctPassword = quizData?.assignment.password; // Adjust for arrays or nesting
+        const correctPassword = quizData?.assignment.password || essayData?.essayAssignment.password; // Adjust for arrays or nesting
         console.log('Correct Password:', correctPassword);
         if (password === correctPassword) {
             router.push(`/guidelines/${id}`);
@@ -65,7 +95,7 @@ const ModulePage: React.FC = () => {
             alert('Incorrect Password');
         }
     };
-    
+
 
     return (
         <div className="flex justify-center items-center w-screen h-screen bg-white">
