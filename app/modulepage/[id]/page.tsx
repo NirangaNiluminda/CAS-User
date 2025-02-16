@@ -57,7 +57,7 @@ const ModulePage: React.FC = () => {
         }
         if (id) {
             // Fetch the data based on the ID for Quiz
-            fetch(`${apiUrl}/api/v1/quiz/${id}`)
+            fetch(`${apiUrl}/api/v1/${id}`)
                 .then((response) => response.json())
                 .then((data) => {
                     console.log('Fetched Quiz Data:', data); // Log the full response

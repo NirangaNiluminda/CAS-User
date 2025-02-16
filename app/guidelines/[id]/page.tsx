@@ -1,4 +1,6 @@
 'use client';
+import { useEssay } from '@/context/EssayContext';
+import { useQuiz } from '@/context/QuizContext';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import React from 'react';
@@ -14,10 +16,28 @@ interface QuizData {
     };
 }
 
+interface EssayData {
+    id: string;
+    essayAssignment: {
+        title: string;
+        guidelines: string[];
+        timeLimit?: number;
+        questions: {
+        };
+    };
+}
+
 const Guidelines: React.FC = () => {
+
+    let isQuiz = false;
+    let isEssay = false;
+
     const router = useRouter();
     const { id } = useParams();
     const [quizData, setQuizData] = useState<QuizData | null>(null);
+    const [essayData, setEssayData] = useState<EssayData | null>(null);
+    const { setQuiz } = useQuiz();
+    const { setEssay } = useEssay();
 
     useEffect(() => {
         let apiUrl;
@@ -31,20 +51,38 @@ const Guidelines: React.FC = () => {
             }
         }
         if (id) {
+            // Fetch the data based on the ID for Quiz
             fetch(`${apiUrl}/api/v1/${id}`)
                 .then((response) => response.json())
                 .then((data) => {
-                    console.log('Fetched Data:', data); // Debug fetched data
-                    setQuizData(data);
+                    console.log('Fetched Quiz Data:', data); // Log the full response
+                    if (data.assignment) {
+                        setQuizData(data);
+                        setQuiz(data);
+                        isQuiz = true;
+                    }
                 })
                 .catch((error) => console.error('Error fetching quiz data:', error));
+
+            // Fetch the data based on the ID for Essay
+            fetch(`${apiUrl}/api/v1/essay/${id}`)
+                .then((response) => response.json())
+                .then((data) => {
+                    console.log('Fetched Essay Data:', data); // Log the full response
+                    if (data.essayAssignment) {
+                        setEssayData(data);
+                        setEssay(data);
+                        isEssay = true;
+                    }
+                })
+                .catch((error) => console.error('Error fetching essay data:', error));
         }
     }, [id]);
 
     const guidelines =
-        quizData?.assignment.guidelines || []; // Fallback to empty array if undefined
+        quizData?.assignment.guidelines || essayData?.essayAssignment.guidelines || []; // Fallback to empty array if undefined
 
-    const timeLimit = quizData?.assignment.timeLimit || 0; // Fallback to 0 if undefined
+    const timeLimit = quizData?.assignment.timeLimit || essayData?.essayAssignment.timeLimit || 0; // Fallback to 0 if undefined
     localStorage.setItem('timeLimit', timeLimit.toString()); // Store the time limit in the local storage
 
     return (
