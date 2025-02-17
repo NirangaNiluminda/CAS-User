@@ -97,6 +97,7 @@ const QuizPage = () => {
                 // Navigate to Submission Page when all questions are completed
                 console.log(selectedAnswerId);
                 sessionStorage.setItem('selectedAnswerId', JSON.stringify(selectedAnswerId || essayAnswer)); // Store the selected answer IDs in the session storage
+                sessionStorage.setItem('EssayAnswer', essayAnswer); // Store the essay answer in the session storage
                 router.push(`/submissionpage/${id}`);
             } else {
                 // Move to the next question
