@@ -7,7 +7,10 @@ import { ChangeEvent, useEffect, useState } from 'react';
 import { Card, CardContent } from '../../components/ui/card';
 import { Progress } from '../../components/ui/progress';
 import { Clock, ArrowLeft, ArrowRight, Send } from 'lucide-react';
+import QuizMonitor from '@/app/components/QuizMonitor/QuizMonitor';
+import { useUser } from '@/context/UserContext';
 const QuizPage = () => {
+    const { user } = useUser();
     const [isQuiz, setIsQuiz] = useState(false);
     const [isEssay, setIsEssay] = useState(false);
     const router = useRouter();
@@ -32,7 +35,46 @@ const QuizPage = () => {
             }[];
         };
     }
+    interface Violation {
+        type: string;
+        timestamp: string;
+        count?: number;
+        key?: string;
+    }
+    // Add these to your existing state declarations
+    const [violations, setViolations] = useState<Violation[]>([]);
+    const [isMonitoring, setIsMonitoring] = useState(false);
 
+    // Add this function to your QuizPage component
+    const handleViolation = (violation: Violation) => {
+        setViolations(prev => [...prev, violation]);
+        if (!user?._id) {
+            console.error('No user found');
+            return;
+        }
+        // Log violation to backend
+        const apiUrl = window.location.hostname === 'localhost'
+            ? 'http://localhost:4000'
+            : process.env.NEXT_PUBLIC_DEPLOYMENT_URL;
+
+        fetch(`${apiUrl}/api/v1/violations`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                studentId: user._id,
+                quizId: id,
+                violation: violation,
+                timestamp: new Date().toISOString()
+            })
+        }).catch(err => console.error('Failed to log violation:', err));
+    };
+
+    // Add this useEffect to start monitoring when the quiz starts
+    useEffect(() => {
+        if (!isLoading && (isQuiz || isEssay)) {
+            setIsMonitoring(true);
+        }
+    }, [isLoading, isQuiz, isEssay]);
     const [quizData, setQuizData] = useState<QuizData | null>(null);
     const [essayData, setEssayData] = useState<EssayData | null>(null);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -93,13 +135,13 @@ const QuizPage = () => {
         setSelectedAnswerId(newSelectedAnswerId);
     };
 
-    interface ShortAnswerChangeEvent extends ChangeEvent<HTMLTextAreaElement> {}
+    interface ShortAnswerChangeEvent extends ChangeEvent<HTMLTextAreaElement> { }
 
     const handleShortAnswerChange = (event: ShortAnswerChangeEvent) => {
         setShortAnswer(event.target.value);
     };
 
-    interface EssayAnswerChangeEvent extends ChangeEvent<HTMLTextAreaElement> {}
+    interface EssayAnswerChangeEvent extends ChangeEvent<HTMLTextAreaElement> { }
 
     const handleEssayAnswerChange = (event: EssayAnswerChangeEvent) => {
         setEssayAnswer(event.target.value);
@@ -118,7 +160,7 @@ const QuizPage = () => {
     const handleNext = () => {
         setLength((quizData?.assignment.questions.length || essayData?.essayAssignment.questions.length) ?? 1);
         sessionStorage.setItem('length', length.toString());
-        
+
         // Save current answer before moving to next question
         if (selectedAnswer !== null || (quizData?.assignment?.questions[currentQuestionIndex]?.options?.length ?? 0) === 0) {
             const newUserAnswers = {
@@ -126,17 +168,17 @@ const QuizPage = () => {
                 [currentQuestionIndex]: selectedAnswer !== null ? selectedAnswer : (shortAnswer || essayAnswer),
             };
             setUserAnswers(newUserAnswers);
-    
-            if ((quizData || essayData) && (quizData?.assignment?.questions || essayData?.essayAssignment.questions) && 
-                (currentQuestionIndex === (quizData?.assignment?.questions?.length ?? 0) - 1 || 
-                 currentQuestionIndex === (essayData?.essayAssignment?.questions?.length ?? 0) - 1)) {
+
+            if ((quizData || essayData) && (quizData?.assignment?.questions || essayData?.essayAssignment.questions) &&
+                (currentQuestionIndex === (quizData?.assignment?.questions?.length ?? 0) - 1 ||
+                    currentQuestionIndex === (essayData?.essayAssignment?.questions?.length ?? 0) - 1)) {
                 sessionStorage.setItem('selectedAnswerId', JSON.stringify(selectedAnswerId || essayAnswer));
                 sessionStorage.setItem('EssayAnswer', essayAnswer);
                 router.push(`/submissionpage/${id}`);
             } else {
                 const nextIndex = currentQuestionIndex + 1;
                 setCurrentQuestionIndex(nextIndex);
-                
+
                 // Restore the answer for the next question if it exists
                 const nextAnswer = newUserAnswers[nextIndex];
                 setSelectedAnswer(typeof nextAnswer === 'number' ? nextAnswer : null);
@@ -261,6 +303,7 @@ const QuizPage = () => {
 
     return (
         <div className="min-h-screen bg-gray-50">
+            {isMonitoring && <QuizMonitor onViolation={handleViolation} />}
             {/* Top Progress Bar */}
             <div className="fixed top-0 left-0 w-full z-50">
                 <Progress value={calculateProgress()} className="h-2" />
@@ -289,7 +332,7 @@ const QuizPage = () => {
                                 Question {currentQuestionIndex + 1} of {(quizData?.assignment.questions.length || essayData?.essayAssignment.questions.length)}
                             </span>
                             <h2 className="mt-2 text-xl font-semibold text-gray-900">
-                                {quizData ? 
+                                {quizData ?
                                     quizData.assignment.questions[currentQuestionIndex].questionText :
                                     essayData?.essayAssignment.questions[currentQuestionIndex].questionText
                                 }
@@ -304,14 +347,14 @@ const QuizPage = () => {
                                             key={index}
                                             onClick={() => handleAnswerClick(index, quizData.assignment.questions[currentQuestionIndex]._id, answer._id)}
                                             className={`p-4 rounded-lg border-2 transition-all cursor-pointer
-                                                ${selectedAnswer === index 
-                                                    ? 'border-green-500 bg-green-50' 
+                                                ${selectedAnswer === index
+                                                    ? 'border-green-500 bg-green-50'
                                                     : 'border-gray-200 hover:border-green-300 hover:bg-gray-50'}`}
                                         >
                                             <div className="flex items-center gap-3">
                                                 <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center
-                                                    ${selectedAnswer === index 
-                                                        ? 'border-green-500 bg-green-500' 
+                                                    ${selectedAnswer === index
+                                                        ? 'border-green-500 bg-green-500'
                                                         : 'border-gray-300'}`}
                                                 >
                                                     {selectedAnswer === index && (
@@ -355,7 +398,7 @@ const QuizPage = () => {
                         <ArrowLeft className="w-5 h-5" />
                         Previous
                     </button>
-                    
+
                     <button
                         onClick={handleNext}
                         className="flex items-center gap-2 px-6 py-3 rounded-lg bg-green-500 text-white font-medium hover:bg-green-600 active:bg-green-700 transition-all"
