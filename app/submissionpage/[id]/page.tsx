@@ -6,252 +6,204 @@ import { useUser } from '@/context/UserContext';
 import axios from 'axios';
 import { useEssay } from '@/context/EssayContext';
 import { useQuiz } from '@/context/QuizContext';
+import { Card, CardContent } from "../../components/ui/card";
+import { Button } from "../../components/ui/button";
+import { Alert, AlertDescription } from "../../components/ui/alert";
+import { ArrowLeft, Send, CheckCircle2 } from 'lucide-react';
 const SubmissionPage: React.FC = () => {
     const router = useRouter();
     const { id } = useParams();
     const { user } = useUser();
     const { essay } = useEssay();
     const { quiz } = useQuiz();
-
-    const studentId = user?._id;
-    const registrationNumber = user?.registrationNumber;
-    const assignmentId = essay?._id || quiz?._id;
-
-    interface Submission {
-        assignmentId: string;
-        studentId: string;
-        score: number;
-    }
-
-    interface EssaySubmission {
-        assignmentId: string;
-        userId: string;
-        registrationNumber: string;
-        answers: [
-            {
-                questionId: string;
-                modelAnswer: string;
-                studentAnswer: string;
-            }
-        ],
-        startTime: string;
-    }
-
-    interface QuizData {
-        assignment: {
-            title: string;
-            questions: [
-                {
-                    questionText: string;
-                    _id: string;
-                    options: [
-                        {
-                            text: string;
-                            isCorrect: boolean;
-                            _id: string;
-                        }
-                    ]
-                }
-            ]
-        };
-    }
-
-    interface EssayData {
-        essayAssignment: {
-            title: string;
-            _id: string;
-            questions: [
-                {
-                    questionText: string;
-                    _id: string;
-                    answer: string;
-                }
-            ]
-        }
-    }
-
-    const [quizData, setQuizData] = useState<QuizData | null>(null);
-    const [submission, setSubmission] = useState<Submission | null>(null);
-    const [essaySubmission, setEssaySubmission] = useState<EssaySubmission | null>(null);
-    const [essayData, setEssayData] = useState<EssayData | null>(null);
-    const { setEssay } = useEssay();
-    const { setQuiz } = useQuiz();
+    
+    const [quizData, setQuizData] = useState(null);
+    const [essayData, setEssayData] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isQuiz, setIsQuiz] = useState(false);
     const [isEssay, setIsEssay] = useState(false);
+    const [savedAnswers, setSavedAnswers] = useState([]);
+    const [submissionInProgress, setSubmissionInProgress] = useState(false);
 
     useEffect(() => {
-        let apiUrl;
-        if (typeof window !== 'undefined') {
-            apiUrl = window.location.hostname === 'localhost' ? 'http://localhost:4000' : process.env.NEXT_PUBLIC_DEPLOYMENT_URL;
-            console.log('Deployment URL:', apiUrl);
+        const savedProgress = sessionStorage.getItem('quizProgress');
+        if (savedProgress) {
+            const progress = JSON.parse(savedProgress);
+            setSavedAnswers(progress.userAnswers || {});
         }
+    }, []);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            const apiUrl = window.location.hostname === 'localhost' 
+                ? 'http://localhost:4000' 
+                : process.env.NEXT_PUBLIC_DEPLOYMENT_URL;
+
+            setIsLoading(true);
+            try {
+                // Fetch quiz data
+                const quizResponse = await fetch(`${apiUrl}/api/v1/${id}`);
+                const quizData = await quizResponse.json();
+                if (quizData.assignment) {
+                    setQuizData(quizData);
+                    setIsQuiz(true);
+                }
+
+                // Fetch essay data
+                const essayResponse = await fetch(`${apiUrl}/api/v1/essay/${id}`);
+                const essayData = await essayResponse.json();
+                if (essayData.essayAssignment) {
+                    setEssayData(essayData);
+                    setIsEssay(true);
+                }
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
 
         if (id) {
-            setIsLoading(true);
-            // Fetch quiz data
-            fetch(`${apiUrl}/api/v1/${id}`)
-                .then((response) => response.json())
-                .then((data) => {
-                    console.log('Fetched Quiz Data:', data);
-                    if (data.assignment) {
-                        setQuizData(data);
-                        setQuiz(data);
-                        setIsQuiz(true);
-                        setIsLoading(false);
-                    }
-                })
-                .catch((error) => {
-                    console.error('Error fetching quiz data:', error);
-                    setIsLoading(false);
-                });
-
-            // Fetch essay data
-            fetch(`${apiUrl}/api/v1/essay/${id}`)
-                .then((response) => response.json())
-                .then((data) => {
-                    console.log('Fetched Essay Data:', data);
-                    if (data.essayAssignment) {
-                        setEssayData(data);
-                        setEssay(data);
-                        setIsEssay(true);
-                        setIsLoading(false);
-                    }
-                })
-                .catch((error) => {
-                    console.error('Error fetching essay data:', error);
-                    setIsLoading(false);
-                });
+            fetchData();
         }
     }, [id]);
 
-
-    if (isLoading) {
-        return <p>Loading...</p>;
-    }
-
-    if (!isQuiz && !isEssay) {
-        return <p>No data available</p>;
-    }
     const handleGoBack = () => {
-        router.push('/question10');
+        // Save current progress before going back
+        const currentProgress = {
+            userAnswers: savedAnswers,
+            currentQuestionIndex: (quizData?.assignment?.questions?.length || essayData?.essayAssignment?.questions?.length || 0) - 1
+        };
+        sessionStorage.setItem('quizProgress', JSON.stringify(currentProgress));
+        router.push(`/quizpage/${id}`);
     };
 
     const handleSubmit = async () => {
-        if (!window.confirm("Are you sure you want to submit?")) return;
+        if (!window.confirm("Are you sure you want to submit? This action cannot be undone.")) {
+            return;
+        }
 
-        const answers = (JSON.parse(sessionStorage.getItem('selectedAnswerId') || '[]') || sessionStorage.getItem('EssayAnswer')); // Parse answers array if stored as JSON
-
-        const submittingData = {
-            userId: studentId,
-            answers: answers,
-            startTime: new Date().toISOString(), // Set current time dynamically
-        };
-
-        // console.log(submittingData);
-        // console.log(submittingData);
-        // console.log(studentId);
+        setSubmissionInProgress(true);
+        const apiUrl = window.location.hostname === 'localhost' 
+            ? 'http://localhost:4000' 
+            : process.env.NEXT_PUBLIC_DEPLOYMENT_URL;
 
         try {
-            let apiUrl;
-            // Determine the correct API URL based on the hostname
-            if (typeof window !== 'undefined') {
-                if (window.location.hostname === 'localhost') {
-                    apiUrl = 'http://localhost:4000';
-                } else {
-                    apiUrl = process.env.NEXT_PUBLIC_DEPLOYMENT_URL;
-                    console.log('Deployment URL:', apiUrl);
-                }
-            }
             if (isQuiz) {
-                console.log(submittingData);
-                const response = await axios.post(`${apiUrl}/api/v1/${id}/submit`, submittingData, {
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
+                const answers = JSON.parse(sessionStorage.getItem('selectedAnswerId') || '[]');
+                const submissionData = {
+                    userId: user?._id,
+                    answers: answers,
+                    startTime: new Date().toISOString()
+                };
+
+                const response = await axios.post(
+                    `${apiUrl}/api/v1/${id}/submit`, 
+                    submissionData,
+                    { headers: { 'Content-Type': 'application/json' } }
+                );
 
                 if (response.data.success) {
-                    alert('Submission successful!');
-                    setSubmission(response.data.submission);
-                    // console.log(response.data); // submission score checking whether it is working
                     sessionStorage.setItem('score', String(response.data.submission?.score));
                     router.push(`/scorepage/${id}`);
                 }
-            } else {
-                
+            } else if (isEssay) {
                 const essayAnswer = sessionStorage.getItem('EssayAnswer');
-                console.log(essayData?.essayAssignment._id, studentId, registrationNumber, essayAnswer);
-                setEssaySubmission({
-                    assignmentId: essayData?.essayAssignment._id || '',
-                    userId: studentId || '',
-                    registrationNumber: registrationNumber || '',
+                const submissionData = {
+                    assignmentId: essayData?.essayAssignment._id,
+                    userId: user?._id,
+                    registrationNumber: user?.registrationNumber,
                     answers: [{
-                        questionId: essayData?.essayAssignment?.questions[0]?._id || '',
-                        modelAnswer: essayData?.essayAssignment?.questions[0]?.answer || '',
-                        studentAnswer: essayAnswer || ''
+                        questionId: essayData?.essayAssignment?.questions[0]?._id,
+                        modelAnswer: essayData?.essayAssignment?.questions[0]?.answer,
+                        studentAnswer: essayAnswer
                     }],
-                    startTime: new Date().toISOString() // Add startTime property
-                })
+                    startTime: new Date().toISOString()
+                };
 
-                console.log(essaySubmission);
-
-                const response = await axios.post(`${apiUrl}/api/v1/essay/${id}/submit`, essaySubmission, {
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
+                const response = await axios.post(
+                    `${apiUrl}/api/v1/essay/${id}/submit`,
+                    submissionData,
+                    { headers: { 'Content-Type': 'application/json' } }
+                );
 
                 if (response.data.success) {
-                    alert('Submission successful!');
-                    setEssaySubmission(response.data.submission);
-                    // console.log(response.data); // submission score checking whether it is working
                     sessionStorage.setItem('score', String(response.data.submission?.score));
                     router.push(`/scorepage/${id}`);
                 }
             }
         } catch (error) {
-            console.error('Error during submission:', error);
-            alert('There was an error submitting your answers.');
+            console.error('Submission error:', error);
+            alert('An error occurred during submission. Please try again.');
+        } finally {
+            setSubmissionInProgress(false);
         }
     };
 
+    if (isLoading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+            </div>
+        );
+    }
+
+    const totalQuestions = quizData?.assignment?.questions?.length || 
+                          essayData?.essayAssignment?.questions?.length || 0;
+    const answeredQuestions = Object.keys(savedAnswers).length;
 
     return (
-        <div className="w-screen h-screen flex flex-col items-center bg-white">
-            <div className="w-full h-[113px] bg-[#d9d9d9] flex items-center justify-center">
-                <div className="text-black text-[40px] font-bold">Submission</div>
-            </div>
-            <div className="w-[90%] h-auto mt-5 bg-[#d9d9d9]/40 rounded-[11px] grid grid-cols-10 gap-2 justify-items-center items-start">
-                {Array.from({ length: quizData?.assignment?.questions?.length || essayData?.essayAssignment?.questions?.length || 0 }, (_, i) => (
-                    <div
-                        key={i}
-                        className="px-5 py-2.5 m-2 rounded-md border-2 border-[#0cdc09] flex flex-col items-center"
-                        style={{
-                            width: '84px', // fixed width
-                            height: '84px', // fixed height
-                        }}
-                    >
-                        <div className="text-center text-black text-[32px] font-bold">{i + 1}</div>
-                        <div className="w-full h-20 bg-[#0cdc09] rounded-md mt-2" />
-                    </div>
-                ))}
-            </div>
-            <div className="w-[90%] mt-auto mb-10 flex justify-between">
-                <button
-                    type="button"
-                    className="focus:outline-none text-black bg-[#0cdc09] hover:bg-green-800 hover:border hover:border-[#0cdc09] focus:ring-4 focus:ring-green-300 font-bold font-['Inter'] tracking-[3.60px] rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-[#0cdc09] dark:hover:bg-transparent dark:focus:ring-green-800 transform transition-transform duration-300 hover:scale-x-110"
-                    onClick={handleGoBack}
-                >
-                    Go Back
-                </button>
-                <button
-                    type="button"
-                    className="focus:outline-none text-black bg-[#0cdc09] hover:bg-green-800 hover:border hover:border-[#0cdc09] focus:ring-4 focus:ring-green-300 font-bold font-['Inter'] tracking-[3.60px] rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-[#0cdc09] dark:hover:bg-transparent dark:focus:ring-green-800 transform transition-transform duration-300 hover:scale-x-110"
-                    onClick={handleSubmit}
-                >
-                    Submit All
-                </button>
+        <div className="min-h-screen bg-gray-50 py-8">
+            <div className="container mx-auto px-4">
+                <Card className="max-w-4xl mx-auto">
+                    <CardContent className="p-6">
+                        <h1 className="text-3xl font-bold text-gray-900 mb-6">
+                            Submission Overview
+                        </h1>
+
+                        <Alert className="mb-6">
+                            <AlertDescription>
+                                You have answered {answeredQuestions} out of {totalQuestions} questions.
+                                {answeredQuestions < totalQuestions && 
+                                    " Consider reviewing unanswered questions before submitting."}
+                            </AlertDescription>
+                        </Alert>
+
+                        <div className="grid grid-cols-5 gap-4 mb-8">
+                            {Array.from({ length: totalQuestions }, (_, i) => (
+                                <Card key={i} className={`p-4 text-center ${
+                                    savedAnswers[i] !== undefined 
+                                        ? 'bg-green-50 border-green-500' 
+                                        : 'bg-gray-50 border-gray-200'
+                                }`}>
+                                    <div className="text-2xl font-bold mb-2">{i + 1}</div>
+                                    {savedAnswers[i] !== undefined && (
+                                        <CheckCircle2 className="w-6 h-6 mx-auto text-green-500" />
+                                    )}
+                                </Card>
+                            ))}
+                        </div>
+
+                        <div className="flex justify-between">
+                            <Button
+                                variant="outline"
+                                onClick={handleGoBack}
+                                className="flex items-center gap-2"
+                            >
+                                <ArrowLeft className="w-4 h-4" /> Go Back
+                            </Button>
+
+                            <Button
+                                onClick={handleSubmit}
+                                disabled={submissionInProgress}
+                                className="flex items-center gap-2 bg-green-500 hover:bg-green-600"
+                            >
+                                <Send className="w-4 h-4" />
+                                {submissionInProgress ? 'Submitting...' : 'Submit All'}
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
         </div>
     );
