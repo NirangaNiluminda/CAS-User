@@ -5,7 +5,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useUser } from '@/context/UserContext';
 import Image from 'next/image';
-
+import { toast } from "sonner";
 
 const SignIn = () => {
     const router = useRouter();
@@ -55,15 +55,18 @@ const SignIn = () => {
                     sessionStorage.setItem('token', token);
                 }
                 setUser(response.data.user)
+                toast.success('Sign in successful!');
                 router.push(`/modulepage/${id}`);
             }
             else{
                 alert('Invalid credentials')
+                toast.error('Invalid credentials');
             }
         }
         catch(error){
-            console.error('Error during sign in:', error);
+            // console.error('Error during sign in:', error);
             alert(`An error occurred. Please try again. ${error}`);
+            toast.error('Error during sign in');
         }
     }
 

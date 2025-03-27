@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import React from 'react';
 import { useQuiz } from '@/context/QuizContext';
 import { useEssay } from '@/context/EssayContext';
+import { toast } from "sonner";
 
 interface QuizData {
     // Define the structure of QuizData here
@@ -90,8 +91,10 @@ const ModulePage: React.FC = () => {
         const correctPassword = quizData?.assignment.password || essayData?.essayAssignment.password; // Adjust for arrays or nesting
         console.log('Correct Password:', correctPassword);
         if (password === correctPassword) {
+            toast.success('Access Granted');
             router.push(`/guidelines/${id}`);
         } else {
+            toast.error('Incorrect Password');
             alert('Incorrect Password');
         }
     };
