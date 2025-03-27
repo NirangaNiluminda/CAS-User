@@ -4,6 +4,7 @@ import "./globals.css";
 import { UserProvider } from './../context/UserContext'; // Adjust the path as necessary
 import { QuizProvider } from "@/context/QuizContext";
 import { EssayProvider } from "@/context/EssayContext";
+import { Toaster } from "sonner";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -24,6 +25,7 @@ export default function RootLayout({
           <QuizProvider>
             <EssayProvider>
               {children}
+              <Toaster position="top-center" richColors />
             </EssayProvider>
           </QuizProvider>
         </UserProvider>
