@@ -4,6 +4,7 @@ import { useQuiz } from '@/context/QuizContext';
 import { useRouter, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import React from 'react';
+import { toast } from "sonner";
 
 interface QuizData {
     id: string;
@@ -79,6 +80,16 @@ const Guidelines: React.FC = () => {
         }
     }, [id]);
 
+    const handleAccept = () => {
+        if(guidelines.length > 0) {
+            toast.success("Loading the Assignment.... Get Ready!");
+            router.push(`/assignment/${id}`); // Redirect to the assignment page
+        }
+        else {
+            toast.error("No guidelines available");
+        }
+    }
+
     const guidelines =
         quizData?.assignment.guidelines || essayData?.essayAssignment.guidelines || []; // Fallback to empty array if undefined
 
@@ -111,7 +122,7 @@ const Guidelines: React.FC = () => {
                 <button
                     type="button"
                     className="focus:outline-none text-black bg-[#0cdc09] hover:bg-green-800 hover:border hover:border-[#0cdc09] focus:ring-4 focus:ring-green-300 font-bold font-['Inter'] tracking-[3.60px] rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-[#0cdc09] dark:hover:bg-transparent dark:focus:ring-green-800 transform transition-transform duration-300 hover:scale-x-110"
-                    onClick={() => router.push(`/assignment/${id}`)}
+                    onClick={handleAccept}
                 >
                     Accept
                 </button>
