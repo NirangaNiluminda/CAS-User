@@ -56,7 +56,8 @@ const SignIn = () => {
                 }
                 setUser(response.data.user)
                 toast.success('Sign in successful!');
-                router.push(`/modulepage/${id}`);
+                
+                router.push(`/waiting/${id}`);
             }
             else{
                 alert('Invalid credentials')
