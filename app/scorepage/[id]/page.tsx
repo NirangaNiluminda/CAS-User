@@ -117,7 +117,7 @@ useEffect(() => {
         <div className="w-full h-screen flex flex-col justify-center items-center bg-white">
             <div className="text-center text-black text-2xl font-bold mb-4">You have got</div>
             <div className="text-center text-black text-6xl font-bold mb-4">
-                {sessionStorage.getItem('score')}/{sessionStorage.getItem('length')}
+                {sessionStorage.getItem('score')}
             </div>
             <Image className="w-[293px] h-100 mb-6" src="/score.jpg" alt="score image" width={380} height={380} />
             <button
