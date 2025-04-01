@@ -16,7 +16,7 @@ const SubmissionPage: React.FC = () => {
     const { user } = useUser();
     const { essay } = useEssay();
     const { quiz } = useQuiz();
-    
+
     const [quizData, setQuizData] = useState(null);
     const [essayData, setEssayData] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -35,8 +35,8 @@ const SubmissionPage: React.FC = () => {
 
     useEffect(() => {
         const fetchData = async () => {
-            const apiUrl = window.location.hostname === 'localhost' 
-                ? 'http://localhost:4000' 
+            const apiUrl = window.location.hostname === 'localhost'
+                ? 'http://localhost:4000'
                 : process.env.NEXT_PUBLIC_DEPLOYMENT_URL;
 
             setIsLoading(true);
@@ -75,7 +75,7 @@ const SubmissionPage: React.FC = () => {
             currentQuestionIndex: (quizData?.assignment?.questions?.length || essayData?.essayAssignment?.questions?.length || 0) - 1
         };
         sessionStorage.setItem('quizProgress', JSON.stringify(currentProgress));
-        router.push(`/quizpage/${id}`);
+        router.push(`/assignment/${id}`);
     };
 
     const handleSubmit = async () => {
@@ -84,11 +84,25 @@ const SubmissionPage: React.FC = () => {
         }
 
         setSubmissionInProgress(true);
-        const apiUrl = window.location.hostname === 'localhost' 
-            ? 'http://localhost:4000' 
+        const apiUrl = window.location.hostname === 'localhost'
+            ? 'http://localhost:4000'
             : process.env.NEXT_PUBLIC_DEPLOYMENT_URL;
 
         try {
+            try {
+                await fetch(`${apiUrl}/api/v1/quiz-session/complete`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        quizId: id,
+                        studentId: user?._id,
+                        timestamp: new Date().toISOString()
+                    })
+                });
+                console.log('Quiz session completed successfully');
+            } catch (error) {
+                console.error('Error completing quiz session:', error);
+            }
             if (isQuiz) {
                 const answers = JSON.parse(sessionStorage.getItem('selectedAnswerId') || '[]');
                 const submissionData = {
@@ -98,7 +112,7 @@ const SubmissionPage: React.FC = () => {
                 };
 
                 const response = await axios.post(
-                    `${apiUrl}/api/v1/${id}/submit`, 
+                    `${apiUrl}/api/v1/${id}/submit`,
                     submissionData,
                     { headers: { 'Content-Type': 'application/json' } }
                 );
@@ -148,8 +162,8 @@ const SubmissionPage: React.FC = () => {
         );
     }
 
-    const totalQuestions = quizData?.assignment?.questions?.length || 
-                          essayData?.essayAssignment?.questions?.length || 0;
+    const totalQuestions = quizData?.assignment?.questions?.length ||
+        essayData?.essayAssignment?.questions?.length || 0;
     const answeredQuestions = Object.keys(savedAnswers).length;
 
     return (
@@ -164,18 +178,17 @@ const SubmissionPage: React.FC = () => {
                         <Alert className="mb-6">
                             <AlertDescription>
                                 You have answered {answeredQuestions} out of {totalQuestions} questions.
-                                {answeredQuestions < totalQuestions && 
+                                {answeredQuestions < totalQuestions &&
                                     " Consider reviewing unanswered questions before submitting."}
                             </AlertDescription>
                         </Alert>
 
                         <div className="grid grid-cols-5 gap-4 mb-8">
                             {Array.from({ length: totalQuestions }, (_, i) => (
-                                <Card key={i} className={`p-4 text-center ${
-                                    savedAnswers[i] !== undefined 
-                                        ? 'bg-green-50 border-green-500' 
+                                <Card key={i} className={`p-4 text-center ${savedAnswers[i] !== undefined
+                                        ? 'bg-green-50 border-green-500'
                                         : 'bg-gray-50 border-gray-200'
-                                }`}>
+                                    }`}>
                                     <div className="text-2xl font-bold mb-2">{i + 1}</div>
                                     {savedAnswers[i] !== undefined && (
                                         <CheckCircle2 className="w-6 h-6 mx-auto text-green-500" />

@@ -1,14 +1,15 @@
-"use client"; // Mark the component as a Client Component
+"use client";
 
 import { useEssay } from '@/context/EssayContext';
 import { useQuiz } from '@/context/QuizContext';
-import { useRouter, useParams } from 'next/navigation'; // Use next/navigation in the App Router
-import { ChangeEvent, useEffect, useState } from 'react';
+import { useRouter, useParams } from 'next/navigation';
+import { ChangeEvent, useEffect, useState, useCallback } from 'react';
 import { Card, CardContent } from '../../components/ui/card';
 import { Progress } from '../../components/ui/progress';
 import { Clock, ArrowLeft, ArrowRight, Send } from 'lucide-react';
 import QuizMonitor from '@/app/components/QuizMonitor/QuizMonitor';
 import { useUser } from '@/context/UserContext';
+
 const QuizPage = () => {
     const { user } = useUser();
     const [isQuiz, setIsQuiz] = useState(false);
@@ -17,13 +18,18 @@ const QuizPage = () => {
     const { id } = useParams();
     const timeLimit = localStorage.getItem('timeLimit');
     const [isLoading, setIsLoading] = useState(true);
+    const [sessionStarted, setSessionStarted] = useState(false);
+    const [apiUrl, setApiUrl] = useState('');
+    
     interface QuizData {
         assignment: {
             questions: {
                 length: number;
                 questionText: string;
                 options: { _id: string; text: string }[];
+                _id: string;
             }[];
+            _id?: string;
         };
     }
 
@@ -32,49 +38,24 @@ const QuizPage = () => {
             questions: {
                 length: number;
                 questionText: string;
+                _id: string;
             }[];
+            _id?: string;
         };
     }
+
     interface Violation {
         type: string;
         timestamp: string;
         count?: number;
         key?: string;
     }
-    // Add these to your existing state declarations
-    const [violations, setViolations] = useState<Violation[]>([]);
-    const [isMonitoring, setIsMonitoring] = useState(false);
-
-    // Add this function to your QuizPage component
-    const handleViolation = (violation: Violation) => {
-        setViolations(prev => [...prev, violation]);
-        if (!user?._id) {
-            console.error('No user found');
-            return;
-        }
-        // Log violation to backend
-        const apiUrl = window.location.hostname === 'localhost'
-            ? 'http://localhost:4000'
-            : process.env.NEXT_PUBLIC_DEPLOYMENT_URL;
-
-        fetch(`${apiUrl}/api/v1/violations`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                studentId: user._id,
-                quizId: id,
-                violation: violation,
-                timestamp: new Date().toISOString()
-            })
-        }).catch(err => console.error('Failed to log violation:', err));
-    };
-
-    // Add this useEffect to start monitoring when the quiz starts
-    useEffect(() => {
-        if (!isLoading && (isQuiz || isEssay)) {
-            setIsMonitoring(true);
-        }
-    }, [isLoading, isQuiz, isEssay]);
+    
+    interface SelectedAnswer {
+        questionId: string;
+        selectedOption: string;
+    }
+    
     const [quizData, setQuizData] = useState<QuizData | null>(null);
     const [essayData, setEssayData] = useState<EssayData | null>(null);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -86,43 +67,301 @@ const QuizPage = () => {
     const { setQuiz } = useQuiz();
     const { setEssay } = useEssay();
     const [essayAnswer, setEssayAnswer] = useState('');
-    const [remainingTime, setRemainingTime] = useState(timeLimit ? Number(timeLimit) * 60 : 0);
 
+    // Timer state variables
+    const [remainingTime, setRemainingTime] = useState(0);
+    const [quizStartTime, setQuizStartTime] = useState<string | null>(null);
+    const [quizEndTime, setQuizEndTime] = useState<string | null>(null);
+    
+    // Monitoring and statistics state
+    const [violations, setViolations] = useState<Violation[]>([]);
+    const [isMonitoring, setIsMonitoring] = useState(false);
+    const [liveStats, setLiveStats] = useState({
+        activeStudents: 0,
+        completedStudents: 0
+    });
+    const [isLiveStatsLoading, setIsLiveStatsLoading] = useState(false);
+    
+    // Initialize API URL
     useEffect(() => {
-        // Load saved progress from session storage
+        if (typeof window !== 'undefined') {
+            const url = window.location.hostname === 'localhost' 
+                ? 'http://localhost:4000' 
+                : process.env.NEXT_PUBLIC_DEPLOYMENT_URL;
+            setApiUrl(url);
+        }
+    }, []);
+    
+    // Handle violations from QuizMonitor
+    const handleViolation = (violation: Violation) => {
+        setViolations(prev => [...prev, violation]);
+        if (!user?._id) {
+            console.error('No user found');
+            return;
+        }
+        
+        fetch(`${apiUrl}/api/v1/violations`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                studentId: user._id,
+                quizId: id,
+                violation: violation,
+                timestamp: new Date().toISOString()
+            })
+        }).catch(err => console.error('Failed to log violation:', err));
+    };
+    
+    // Start session function
+    const startSession = useCallback(async () => {
+        if (!apiUrl || !id || !user?._id || sessionStarted) {
+            console.log("Cannot start session: ", {
+                apiUrl: !!apiUrl,
+                id: !!id,
+                userId: user?._id,
+                sessionStarted
+            });
+            return;
+        }
+    
+        try {
+            const response = await fetch(`${apiUrl}/api/v1/quiz-session/start`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    quizId: id,
+                    studentId: user._id,
+                    timestamp: new Date().toISOString()
+                })
+            });
+    
+            if (response.ok) {
+                setSessionStarted(true);
+                console.log('Quiz session started successfully');
+            } else {
+                const errorData = await response.json().catch(() => ({}));
+                console.error('Failed to start quiz session:', response.status, errorData);
+            }
+        } catch (error) {
+            console.error('Error starting quiz session:', error);
+        }
+    }, [apiUrl, id, user, sessionStarted]);
+    
+    // Send heartbeat while quiz is active
+    useEffect(() => {
+        if (!sessionStarted || !apiUrl || !id || !user?._id) return;
+    
+        const sendHeartbeat = async () => {
+            try {
+                await fetch(`${apiUrl}/api/v1/quiz-session/heartbeat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        quizId: id,
+                        studentId: user._id,
+                        timestamp: new Date().toISOString()
+                    })
+                });
+            } catch (error) {
+                console.error('Error sending heartbeat:', error);
+            }
+        };
+    
+        // Send heartbeat immediately
+        sendHeartbeat();
+    
+        // Then set up interval
+        const heartbeatInterval = setInterval(sendHeartbeat, 30000); // every 30 seconds
+    
+        return () => clearInterval(heartbeatInterval);
+    }, [sessionStarted, apiUrl, id, user]);
+
+    // Complete session function
+    const completeSession = useCallback(async () => {
+        if (!sessionStarted || !apiUrl || !id || !user?._id) {
+            console.log("Cannot complete session: ", {
+                sessionStarted,
+                apiUrl: !!apiUrl,
+                id: !!id,
+                userId: user?._id
+            });
+            return;
+        }
+    
+        try {
+            const response = await fetch(`${apiUrl}/api/v1/quiz-session/complete`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    quizId: id,
+                    studentId: user._id,
+                    timestamp: new Date().toISOString()
+                })
+            });
+    
+            if (response.ok) {
+                console.log('Quiz session completed successfully');
+            } else {
+                const errorData = await response.json().catch(() => ({}));
+                console.error('Failed to complete quiz session:', response.status, errorData);
+            }
+        } catch (error) {
+            console.error('Error completing quiz session:', error);
+        }
+    }, [sessionStarted, apiUrl, id, user]);
+    
+    // Complete session when component unmounts
+    useEffect(() => {
+        return () => {
+            if (sessionStarted) {
+                completeSession();
+            }
+        };
+    }, [sessionStarted, completeSession]);
+
+    // Fetch live stats
+    const fetchLiveStats = useCallback(async () => {
+        const quizId = quizData?.assignment?._id || essayData?.essayAssignment?._id;
+        if (!quizId || !apiUrl) return;
+    
+        try {
+            setIsLiveStatsLoading(true);
+            const response = await fetch(`${apiUrl}/api/v1/stats/${quizId}`);
+    
+            if (response.ok) {
+                const data = await response.json();
+                setLiveStats({
+                    activeStudents: data.activeCount || 0,
+                    completedStudents: data.completedCount || 0
+                });
+            }
+        } catch (error) {
+            console.error("Failed to fetch live quiz statistics:", error);
+        } finally {
+            setIsLiveStatsLoading(false);
+        }
+    }, [quizData, essayData, apiUrl]);
+    
+    // Set up periodic stats fetching
+    useEffect(() => {
+        if (!quizData?.assignment?._id && !essayData?.essayAssignment?._id) return;
+        
+        // Initial fetch
+        fetchLiveStats();
+
+        // Set up interval to fetch every 10 seconds
+        const statsInterval = setInterval(fetchLiveStats, 10000);
+
+        return () => {
+            clearInterval(statsInterval);
+        };
+    }, [fetchLiveStats, quizData, essayData]);
+    
+    // Start monitoring when quiz loads
+    useEffect(() => {
+        if (!isLoading && (isQuiz || isEssay)) {
+            setIsMonitoring(true);
+        }
+    }, [isLoading, isQuiz, isEssay]);
+
+    // Load saved progress
+    useEffect(() => {
         const savedProgress = sessionStorage.getItem('quizProgress');
         if (savedProgress) {
             const progress = JSON.parse(savedProgress);
             setCurrentQuestionIndex(progress.currentQuestionIndex);
-            setUserAnswers(progress.userAnswers);
-            setSelectedAnswerId(progress.selectedAnswerId);
-            setShortAnswer(progress.shortAnswer);
-            setEssayAnswer(progress.essayAnswer);
-            setRemainingTime(progress.remainingTime);
+            setUserAnswers(progress.userAnswers || {});
+            setSelectedAnswerId(progress.selectedAnswerId || []);
+            setShortAnswer(progress.shortAnswer || '');
+            setEssayAnswer(progress.essayAnswer || '');
+
+            // Load quiz timing information
+            if (progress.quizStartTime) {
+                setQuizStartTime(progress.quizStartTime);
+            }
+            if (progress.quizEndTime) {
+                setQuizEndTime(progress.quizEndTime);
+            }
         }
     }, []);
-
+    
+    // Initialize timer
     useEffect(() => {
-        // Save progress to session storage
+        const initializeTimer = () => {
+            const storedStartTime = sessionStorage.getItem('quizStartTime');
+            const storedEndTime = sessionStorage.getItem('quizEndTime');
+
+            if (storedStartTime && storedEndTime) {
+                // Quiz was already started
+                const endDate = new Date(storedEndTime);
+                const now = new Date();
+
+                // Check if the stored end time is in the past
+                if (endDate <= now) {
+                    console.log("Stored end time is in the past, creating a new one");
+
+                    // Create a new end time (or use timeLimit if available)
+                    const newStartTime = new Date().toISOString();
+                    const newEndTime = new Date(Date.now() + (Number(timeLimit) || 30) * 60 * 1000).toISOString();
+
+                    setQuizStartTime(newStartTime);
+                    setQuizEndTime(newEndTime);
+
+                    // Update in session storage
+                    sessionStorage.setItem('quizStartTime', newStartTime);
+                    sessionStorage.setItem('quizEndTime', newEndTime);
+                } else {
+                    // Use the stored times since they're still valid
+                    setQuizStartTime(storedStartTime);
+                    setQuizEndTime(storedEndTime);
+                }
+            } else if (timeLimit) {
+                // First time starting the quiz
+                const startTime = new Date().toISOString();
+                const endTime = new Date(Date.now() + Number(timeLimit) * 60 * 1000).toISOString();
+
+                setQuizStartTime(startTime);
+                setQuizEndTime(endTime);
+
+                // Store in session storage
+                sessionStorage.setItem('quizStartTime', startTime);
+                sessionStorage.setItem('quizEndTime', endTime);
+            } else {
+                // No time limit provided, default to 30 minutes
+                const startTime = new Date().toISOString();
+                const endTime = new Date(Date.now() + 30 * 60 * 1000).toISOString();
+
+                setQuizStartTime(startTime);
+                setQuizEndTime(endTime);
+
+                // Store in session storage
+                sessionStorage.setItem('quizStartTime', startTime);
+                sessionStorage.setItem('quizEndTime', endTime);
+            }
+        };
+
+        initializeTimer();
+    }, [timeLimit]);
+
+    // Save progress to session storage
+    useEffect(() => {
         const progress = {
             currentQuestionIndex,
             userAnswers,
             selectedAnswerId,
             shortAnswer,
             essayAnswer,
-            remainingTime
+            quizStartTime,
+            quizEndTime
         };
         sessionStorage.setItem('quizProgress', JSON.stringify(progress));
-    }, [currentQuestionIndex, userAnswers, selectedAnswerId, shortAnswer, essayAnswer, remainingTime]);
+    }, [currentQuestionIndex, userAnswers, selectedAnswerId, shortAnswer, essayAnswer, quizStartTime, quizEndTime]);
 
-    interface SelectedAnswer {
-        questionId: string;
-        selectedOption: string;
-    }
-
+    // Handle answer selection
     const handleAnswerClick = (index: number, questionId: string, selectedOption: string) => {
         setSelectedAnswer(index);
         const newSelectedAnswerId: SelectedAnswer[] = [...selectedAnswerId];
+        
         // Find and update existing answer for this question, or add new one
         const existingIndex = newSelectedAnswerId.findIndex(
             (item) => item.questionId === questionId
@@ -135,28 +374,24 @@ const QuizPage = () => {
         setSelectedAnswerId(newSelectedAnswerId);
     };
 
-    interface ShortAnswerChangeEvent extends ChangeEvent<HTMLTextAreaElement> { }
-
-    const handleShortAnswerChange = (event: ShortAnswerChangeEvent) => {
+    // Handle short answer changes
+    const handleShortAnswerChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
         setShortAnswer(event.target.value);
     };
 
-    interface EssayAnswerChangeEvent extends ChangeEvent<HTMLTextAreaElement> { }
-
-    const handleEssayAnswerChange = (event: EssayAnswerChangeEvent) => {
+    // Handle essay answer changes
+    const handleEssayAnswerChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
         setEssayAnswer(event.target.value);
     };
 
-    interface FormatTime {
-        (seconds: number): string;
-    }
-
-    const formatTime: FormatTime = (seconds) => {
+    // Format time for display
+    const formatTime = (seconds: number) => {
         const minutes = Math.floor(seconds / 60);
         const secs = seconds % 60;
         return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     };
 
+    // Handle next button click
     const handleNext = () => {
         setLength((quizData?.assignment.questions.length || essayData?.essayAssignment.questions.length) ?? 1);
         sessionStorage.setItem('length', length.toString());
@@ -174,6 +409,7 @@ const QuizPage = () => {
                     currentQuestionIndex === (essayData?.essayAssignment?.questions?.length ?? 0) - 1)) {
                 sessionStorage.setItem('selectedAnswerId', JSON.stringify(selectedAnswerId || essayAnswer));
                 sessionStorage.setItem('EssayAnswer', essayAnswer);
+                completeSession();
                 router.push(`/submissionpage/${id}`);
             } else {
                 const nextIndex = currentQuestionIndex + 1;
@@ -188,6 +424,7 @@ const QuizPage = () => {
         }
     };
 
+    // Handle previous button click
     const handlePrevious = () => {
         if (currentQuestionIndex > 0) {
             setUserAnswers(prev => ({
@@ -201,8 +438,9 @@ const QuizPage = () => {
             setShortAnswer(typeof prevAnswer === 'string' ? prevAnswer : '');
         }
     };
+
+    // Restore saved answers when question changes
     useEffect(() => {
-        // When current question index changes, restore the saved answer
         const savedAnswer = userAnswers[currentQuestionIndex];
         if (savedAnswer !== undefined) {
             if (typeof savedAnswer === 'number') {
@@ -226,63 +464,82 @@ const QuizPage = () => {
             setEssayAnswer('');
         }
     }, [currentQuestionIndex, userAnswers, isQuiz]);
+
+    // Fetch quiz and essay data
     useEffect(() => {
-        if (remainingTime > 0) {
-            const timer = setInterval(() => {
-                setRemainingTime((prevTime) => prevTime - 1);
-            }, 1000);
+        if (!apiUrl || !id) return;
 
-            return () => clearInterval(timer);
-        } else if (remainingTime === 0) {
-            console.log("Time's up!");
-        }
-    }, [remainingTime]);
-
-    useEffect(() => {
-        let apiUrl;
-        if (typeof window !== 'undefined') {
-            apiUrl = window.location.hostname === 'localhost' ? 'http://localhost:4000' : process.env.NEXT_PUBLIC_DEPLOYMENT_URL;
-        }
-
-        if (id) {
-            setIsLoading(true);
-            fetch(`${apiUrl}/api/v1/${id}`)
-                .then((response) => response.json())
-                .then((data) => {
-                    if (data.assignment) {
-                        setQuizData(data);
-                        setQuiz(data);
-                        setIsQuiz(true);
-                        setIsLoading(false);
-                    }
-                })
-                .catch((error) => {
-                    console.error('Error fetching quiz data:', error);
+        setIsLoading(true);
+        
+        // Fetch quiz data
+        fetch(`${apiUrl}/api/v1/${id}`)
+            .then((response) => response.json())
+            .then((data) => {
+                if (data.assignment) {
+                    setQuizData(data);
+                    setQuiz(data);
+                    setIsQuiz(true);
                     setIsLoading(false);
-                });
+                    startSession();
+                }
+            })
+            .catch((error) => {
+                console.error('Error fetching quiz data:', error);
+                setIsLoading(false);
+            });
 
-            fetch(`${apiUrl}/api/v1/essay/${id}`)
-                .then((response) => response.json())
-                .then((data) => {
-                    if (data.essayAssignment) {
-                        setEssayData(data);
-                        setEssay(data);
-                        setIsEssay(true);
-                        setIsLoading(false);
-                    }
-                })
-                .catch((error) => {
-                    console.error('Error fetching essay data:', error);
+        // Fetch essay data
+        fetch(`${apiUrl}/api/v1/essay/${id}`)
+            .then((response) => response.json())
+            .then((data) => {
+                if (data.essayAssignment) {
+                    setEssayData(data);
+                    setEssay(data);
+                    setIsEssay(true);
                     setIsLoading(false);
-                });
-        }
-    }, [id]);
+                    startSession();
+                }
+            })
+            .catch((error) => {
+                console.error('Error fetching essay data:', error);
+                setIsLoading(false);
+            });
+    }, [id, apiUrl, startSession]);
 
+    // Calculate progress percentage
     const calculateProgress = () => {
         const totalQuestions = (quizData?.assignment.questions.length || essayData?.essayAssignment.questions.length) ?? 1;
         return ((currentQuestionIndex + 1) / totalQuestions) * 100;
     };
 
+    // Timer countdown and auto-submit
+    useEffect(() => {
+        if (quizEndTime) {
+            const calculateRemainingTime = () => {
+                const now = new Date();
+                const end = new Date(quizEndTime);
+                const timeLeft = Math.max(0, Math.floor((end.getTime() - now.getTime()) / 1000));
+
+                setRemainingTime(timeLeft);
+                
+                // Auto-submit if time runs out
+                if (timeLeft <= 0) {
+                    console.log("Time's up!");
+                    completeSession();
+                    router.push(`/submissionpage/${id}`);
+                }
+            };
+
+            calculateRemainingTime();
+
+            // Set up interval
+            const timer = setInterval(calculateRemainingTime, 1000);
+
+            return () => clearInterval(timer);
+        }
+    }, [quizEndTime, id, router, completeSession]);
+
+    // Loading indicator
     if (isLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center">
@@ -291,6 +548,7 @@ const QuizPage = () => {
         );
     }
 
+    // No quiz data
     if (!isQuiz && !isEssay) {
         return (
             <div className="min-h-screen flex items-center justify-center">
@@ -304,6 +562,7 @@ const QuizPage = () => {
     return (
         <div className="min-h-screen bg-gray-50">
             {isMonitoring && <QuizMonitor onViolation={handleViolation} />}
+            
             {/* Top Progress Bar */}
             <div className="fixed top-0 left-0 w-full z-50">
                 <Progress value={calculateProgress()} className="h-2" />

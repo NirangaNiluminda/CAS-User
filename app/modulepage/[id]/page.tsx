@@ -7,7 +7,7 @@ import React from 'react';
 import { useQuiz } from '@/context/QuizContext';
 import { useEssay } from '@/context/EssayContext';
 import { toast } from "sonner";
-
+import { useUser } from '@/context/UserContext';
 interface QuizData {
     // Define the structure of QuizData here
     id: string;
@@ -30,7 +30,7 @@ interface EssayData {
 
 
 const ModulePage: React.FC = () => {
-
+    const { user } = useUser();
     let isQuiz = false;
     let isEssay = false;
     const router = useRouter();
@@ -88,10 +88,53 @@ const ModulePage: React.FC = () => {
 
     const handleEnter = () => {
         console.log(quizData);
-        const correctPassword = quizData?.assignment.password || essayData?.essayAssignment.password; // Adjust for arrays or nesting
+        const correctPassword = quizData?.assignment.password || essayData?.essayAssignment.password;
         console.log('Correct Password:', correctPassword);
         if (password === correctPassword) {
             toast.success('Access Granted');
+
+            // // Start session here
+            // const startQuizSession = async () => {
+            //     try {
+            //         Check if user is available
+            //         if (!user || !user._id) {
+            //             console.error("User information not available");
+            //             return;
+            //         }
+            
+            //         Check both storage locations and log the token value
+            //         const sessionToken = sessionStorage.getItem('token');
+            //         const localToken = localStorage.getItem('token');
+            //         const token = sessionToken || localToken;
+            
+            //         console.log("Token available:", !!token);
+                    
+            //         const apiUrl = window.location.hostname === 'localhost'
+            //             ? 'http://localhost:4000'
+            //             : process.env.NEXT_PUBLIC_DEPLOYMENT_URL;
+            
+            //         const response = await fetch(`${apiUrl}/api/v1/quiz-session/start`, {
+            //             method: 'POST',
+            //             headers: { 'Content-Type': 'application/json' },
+            //             body: JSON.stringify({
+            //                 quizId: id,
+            //                 studentId: user._id,
+            //                 timestamp: new Date().toISOString()
+            //             })
+            //         });
+            
+            //         if (response.ok) {
+            //             console.log('Quiz session started successfully');
+            //         } else {
+            //             const errorText = await response.text();
+            //             console.error('Failed to start quiz session:', response.status, errorText);
+            //         }
+            //     } catch (error) {
+            //         console.error('Error starting quiz session:', error);
+            //     }
+            // };
+
+            // startQuizSession();
             router.push(`/guidelines/${id}`);
         } else {
             toast.error('Incorrect Password');
