@@ -52,15 +52,38 @@ const WaitingPage = () => {
       
       try {
         setLoading(true);
-        const response = await axios.get(`${apiUrl}/api/v1/${id}?forWaiting=true`);
         
-        if (response.data && (response.data.success || response.data._id)) {
-          // If the API returns the data directly or in the "assignment" field
-          setAssignment(response.data.assignment || response.data);
-        } else {
-          setError('Failed to load assignment information');
-          toast.error('Failed to load assignment information');
+        // Try fetching as quiz first
+        try {
+          const quizResponse = await axios.get(`${apiUrl}/api/v1/${id}?forWaiting=true`);
+          if (quizResponse.data && (quizResponse.data.success || quizResponse.data._id)) {
+            setAssignment(quizResponse.data.assignment || quizResponse.data);
+            setLoading(false);
+            return; // Successfully found quiz, exit function
+          }
+        } catch (quizError) {
+          // Quiz not found, continue to try essay endpoint
         }
+        
+        // If quiz not found, try fetching as essay
+        try {
+          const essayResponse = await axios.get(`${apiUrl}/api/v1/essay/${id}?forWaiting=true`);
+          if (essayResponse.data && (essayResponse.data.success || essayResponse.data.essayAssignment?._id)) {
+            // Format essay assignment to match expected AssignmentDetails structure
+            const essayData = essayResponse.data.essayAssignment || essayResponse.data;
+            setAssignment(essayData);
+            setLoading(false);
+            return; // Successfully found essay, exit function
+          }
+        } catch (essayError) {
+          // Essay not found either
+          throw new Error('Assignment not found in either quiz or essay collections');
+        }
+        
+        // If we get here, neither endpoint returned valid data
+        setError('Failed to load assignment information');
+        toast.error('Failed to load assignment information');
+        
       } catch (error) {
         console.error('Error fetching assignment details:', error);
         setError('Failed to load assignment information. Please try again later.');
