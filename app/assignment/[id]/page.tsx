@@ -143,7 +143,11 @@ const QuizPage = () => {
                 console.error('Failed to start quiz session:', response.status, errorData);
             }
         } catch (error) {
-            console.error('Error starting quiz session:', error);
+            console.error('Detailed error starting quiz session:', {
+                message: error.message,
+                stack: error.stack,
+                api: `${apiUrl}/api/v1/quiz-session/start`
+            });
         }
     }, [apiUrl, id, user, sessionStarted]);
     
