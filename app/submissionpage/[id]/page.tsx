@@ -82,27 +82,42 @@ const SubmissionPage: React.FC = () => {
         if (!window.confirm("Are you sure you want to submit? This action cannot be undone.")) {
             return;
         }
-
+    
         setSubmissionInProgress(true);
         const apiUrl = window.location.hostname === 'localhost'
             ? 'http://localhost:4000'
             : process.env.NEXT_PUBLIC_DEPLOYMENT_URL;
-
+    
         try {
-            try {
-                await fetch(`${apiUrl}/api/v1/quiz-session/complete`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        quizId: id,
-                        studentId: user?._id,
-                        timestamp: new Date().toISOString()
-                    })
-                });
-                console.log('Quiz session completed successfully');
-            } catch (error) {
-                console.error('Error completing quiz session:', error);
+            // Try to complete the session - use a more generic assignment ID
+            const assignmentId = isQuiz 
+                ? quizData?.assignment?._id || id 
+                : essayData?.essayAssignment?._id || id;
+            
+            if (user?._id && assignmentId) {
+                try {
+                    const sessionResponse = await fetch(`${apiUrl}/api/v1/quiz-session/complete`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            quizId: assignmentId,
+                            studentId: user._id,
+                            timestamp: new Date().toISOString()
+                        })
+                    });
+                    
+                    if (sessionResponse.ok) {
+                        console.log('Session completed successfully');
+                    } else {
+                        console.warn('Session completion returned non-OK status');
+                    }
+                } catch (sessionError) {
+                    console.error('Error completing session:', sessionError);
+                    // Continue with submission
+                }
             }
+    
+            // Handle submission based on type
             if (isQuiz) {
                 const answers = JSON.parse(sessionStorage.getItem('selectedAnswerId') || '[]');
                 const submissionData = {
@@ -110,45 +125,94 @@ const SubmissionPage: React.FC = () => {
                     answers: answers,
                     startTime: new Date().toISOString()
                 };
-
+    
+                console.log("Quiz submission data:", submissionData);
+    
                 const response = await axios.post(
                     `${apiUrl}/api/v1/${id}/submit`,
                     submissionData,
-                    { headers: { 'Content-Type': 'application/json' } }
+                    { 
+                        headers: { 'Content-Type': 'application/json' },
+                        timeout: 10000 // Add timeout to avoid hanging requests
+                    }
                 );
-
+    
                 if (response.data.success) {
                     sessionStorage.setItem('score', String(response.data.submission?.score));
                     router.push(`/scorepage/${id}`);
                 }
             } else if (isEssay) {
                 const essayAnswer = sessionStorage.getItem('EssayAnswer');
+                
+                // Make sure we have the essay ID
+                if (!essayData?.essayAssignment?._id) {
+                    console.error("Missing essay assignment ID", essayData);
+                    throw new Error("Essay assignment data is incomplete");
+                }
+    
+                // Create submission data with all required fields
                 const submissionData = {
-                    assignmentId: essayData?.essayAssignment._id,
+                    assignmentId: essayData.essayAssignment._id,
                     userId: user?._id,
-                    registrationNumber: user?.registrationNumber,
+                    registrationNumber: user?.registrationNumber || "",
                     answers: [{
-                        questionId: essayData?.essayAssignment?.questions[0]?._id,
-                        modelAnswer: essayData?.essayAssignment?.questions[0]?.answer,
-                        studentAnswer: essayAnswer
+                        questionId: essayData.essayAssignment.questions[0]?._id,
+                        modelAnswer: essayData.essayAssignment.questions[0]?.answer || "",
+                        studentAnswer: essayAnswer || ""
                     }],
                     startTime: new Date().toISOString()
                 };
-
-                const response = await axios.post(
-                    `${apiUrl}/api/v1/essay/${id}/submit`,
-                    submissionData,
-                    { headers: { 'Content-Type': 'application/json' } }
-                );
-
-                if (response.data.success) {
-                    sessionStorage.setItem('score', String(response.data.submission?.score));
-                    router.push(`/scorepage/${id}`);
+    
+                console.log("Essay submission data:", submissionData);
+    
+                // Try with fetch instead of axios as an alternative
+                try {
+                    const response = await fetch(`${apiUrl}/api/v1/essay/${id}/submit`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(submissionData)
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+                    }
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        sessionStorage.setItem('score', String(data.submission?.score));
+                        router.push(`/scorepage/${id}`);
+                    } else {
+                        throw new Error(data.message || "Essay submission failed");
+                    }
+                } catch (fetchError) {
+                    console.error("Fetch error:", fetchError);
+                    
+                    // Fall back to axios as a second attempt with a different URL format
+                    console.log("Trying alternative submission method...");
+                    const altResponse = await axios.post(
+                        `${apiUrl}/api/v1/essay-submission`,
+                        {
+                            ...submissionData,
+                            essayId: id // Add explicit essay ID
+                        },
+                        { 
+                            headers: { 'Content-Type': 'application/json' },
+                            timeout: 15000
+                        }
+                    );
+                    
+                    if (altResponse.data.success) {
+                        sessionStorage.setItem('score', String(altResponse.data.submission?.score));
+                        router.push(`/scorepage/${id}`);
+                    } else {
+                        throw new Error(altResponse.data.message || "Essay submission failed with alternative method");
+                    }
                 }
             }
         } catch (error) {
-            console.error('Submission error:', error);
-            alert('An error occurred during submission. Please try again.');
+            console.error('Submission error details:', error);
+            alert(`An error occurred during submission: ${error.message || 'Unknown error'}. Please try again.`);
         } finally {
             setSubmissionInProgress(false);
         }
