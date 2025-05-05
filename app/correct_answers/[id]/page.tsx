@@ -3,7 +3,7 @@ import { useQuiz } from '@/context/QuizContext'
 import { useParams, useRouter } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
 
-const page = () => {
+const Page = () => {
 
   const { quiz, setQuiz } = useQuiz();
   const { id } = useParams();
@@ -94,4 +94,4 @@ const page = () => {
   );
 }
 
-export default page
+export default Page;

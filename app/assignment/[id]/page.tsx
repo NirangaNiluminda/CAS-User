@@ -87,7 +87,7 @@ const QuizPage = () => {
         if (typeof window !== 'undefined') {
             const url = window.location.hostname === 'localhost' 
                 ? 'http://localhost:4000' 
-                : process.env.NEXT_PUBLIC_DEPLOYMENT_URL;
+                : process.env.NEXT_PUBLIC_DEPLOYMENT_URL || '';
             setApiUrl(url);
         }
     }, []);
@@ -142,7 +142,7 @@ const QuizPage = () => {
                 const errorData = await response.json().catch(() => ({}));
                 console.error('Failed to start quiz session:', response.status, errorData);
             }
-        } catch (error) {
+        } catch (error : any) {
             console.error('Detailed error starting quiz session:', {
                 message: error.message,
                 stack: error.stack,
