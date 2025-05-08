@@ -7,6 +7,8 @@ interface User {
   email: string;
   role: string;
   isVerified: boolean;
+  batch: number;
+  repeatingBatch: number;
   registrationNumber: string;
   courses: string[];
 }
