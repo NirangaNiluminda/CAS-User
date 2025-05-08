@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import axios from 'axios';
-import Image from 'next/image';
+// import Image from 'next/image';
 import { toast } from "sonner";
 
 interface TimeRemaining {
@@ -40,7 +40,7 @@ const WaitingPage = () => {
       if (window.location.hostname === 'localhost') {
         setApiUrl('http://localhost:4000');
       } else {
-        setApiUrl('http://52.64.209.177:4000');
+        setApiUrl( process.env.NEXT_PUBLIC_DEPLOYMENT_URL || 'http://52.64.209.177:4000');
       }
     }
   }, []);
@@ -182,7 +182,7 @@ const WaitingPage = () => {
         <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full">
           <div className="text-center text-yellow-500 text-4xl mb-4">⚠️</div>
           <h1 className="text-2xl font-bold text-center mb-4">Assignment Not Found</h1>
-          <p className="text-center mb-6">We couldn't find the assignment you're looking for.</p>
+          <p className="text-center mb-6">We couldn&apos;t find the assignment you&apos;re looking for.</p>
           <button 
             onClick={() => router.push('/')}
             className="w-full py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-all"
@@ -272,8 +272,8 @@ const WaitingPage = () => {
             <div className="flex items-start">
               <span className="text-yellow-500 mr-2 mt-0.5">⚠️</span>
               <p className="text-sm text-gray-700">
-                Please make sure you're ready before the assignment starts. Once you begin, 
-                the timer will start counting down and you'll need to complete all questions 
+                Please make sure you&apos;re ready before the assignment starts. Once you begin, 
+                the timer will start counting down and you&apos;ll need to complete all questions 
                 within the time limit.
               </p>
             </div>

@@ -17,8 +17,22 @@ const SubmissionPage: React.FC = () => {
     const { essay } = useEssay();
     const { quiz } = useQuiz();
 
-    const [quizData, setQuizData] = useState(null);
-    const [essayData, setEssayData] = useState(null);
+    interface QuizData {
+        assignment?: {
+            _id?: string;
+            questions?: { _id: string }[];
+        };
+    }
+
+    interface EssayData {
+        essayAssignment?: {
+            _id?: string;
+            questions?: { _id: string; answer?: string }[];
+        };
+    }
+
+    const [quizData, setQuizData] = useState<QuizData | null>(null);
+    const [essayData, setEssayData] = useState<EssayData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isQuiz, setIsQuiz] = useState(false);
     const [isEssay, setIsEssay] = useState(false);
@@ -156,8 +170,8 @@ const SubmissionPage: React.FC = () => {
                     userId: user?._id,
                     registrationNumber: user?.registrationNumber || "",
                     answers: [{
-                        questionId: essayData.essayAssignment.questions[0]?._id,
-                        modelAnswer: essayData.essayAssignment.questions[0]?.answer || "",
+                        questionId: essayData.essayAssignment.questions?.[0]?._id ?? null,
+                        modelAnswer: essayData.essayAssignment.questions?.[0]?.answer || "",
                         studentAnswer: essayAnswer || ""
                     }],
                     startTime: new Date().toISOString()
@@ -212,7 +226,8 @@ const SubmissionPage: React.FC = () => {
             }
         } catch (error) {
             console.error('Submission error details:', error);
-            alert(`An error occurred during submission: ${error.message || 'Unknown error'}. Please try again.`);
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            alert(`An error occurred during submission: ${errorMessage}. Please try again.`);
         } finally {
             setSubmissionInProgress(false);
         }
