@@ -7,9 +7,35 @@ import { useUser } from '@/context/UserContext';
 import Image from 'next/image';
 import { toast } from "sonner";
 
+interface TimeRemaining {
+    days: number;
+    hours: number;
+    minutes: number;
+    seconds: number;
+}
+
+interface AssignmentDetails {
+    _id: string;
+    title: string;
+    description: string;
+    timeLimit: number;
+    startDate: string;
+    endDate: string;
+    teacherId: string;
+    success?: boolean;
+    intendedBatch: number;
+    attemptedStudents: string[];
+}
+
 const SignIn = () => {
     const router = useRouter();
     const { id } = useParams();
+    const [assignment, setAssignment] = useState<AssignmentDetails | null>(null);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string | null>(null);
+    const [batch, setBatch] = useState<number | null>(null);
+    const [isEssay, setIsEssay] = useState<boolean>(false);
+    const [isQuiz, setIsQuiz] = useState<boolean>(false);
 
     const [formData, setFormData] = useState({
         registrationNumber: '',
@@ -26,45 +52,163 @@ const SignIn = () => {
         setRememberMe(e.target.checked);
     }
 
-    const {setUser} = useUser();
+    const { user, setUser } = useUser();
     const [apiUrl, setApiUrl] = useState('');
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      // This will run only on the client side
-      if (window.location.hostname === 'localhost') {
-        setApiUrl('http://localhost:4000');
-      } else {
-        setApiUrl( process.env.NEXT_PUBLIC_DEPLOYMENT_URL || 'http://52.64.209.177:4000');
-      }
-    }
-  }, []);
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            // This will run only on the client side
+            if (window.location.hostname === 'localhost') {
+                setApiUrl('http://localhost:4000');
+            } else {
+                setApiUrl(process.env.NEXT_PUBLIC_DEPLOYMENT_URL || 'http://52.64.209.177:4000');
+            }
+        }
+    }, []);
+
+    // Fetch assignment details
+    useEffect(() => {
+        const fetchAssignmentDetails = async () => {
+            if (!id || !apiUrl) return;
+
+            try {
+                setLoading(true);
+
+                // Try fetching as quiz first
+                try {
+                    const quizResponse = await axios.get(`${apiUrl}/api/v1/${id}`);
+                    if (quizResponse.data && (quizResponse.data.success || quizResponse.data._id)) {
+                        setAssignment(quizResponse.data.assignment || quizResponse.data);
+                        setLoading(false);
+                        setIsQuiz(true);
+                        setIsEssay(false);
+                        return; // Successfully found quiz, exit function
+                    }
+                } catch (quizError) {
+                    // Quiz not found, continue to try essay endpoint
+                }
+
+                // If quiz not found, try fetching as essay
+                try {
+                    const essayResponse = await axios.get(`${apiUrl}/api/v1/essay/${id}`);
+                    if (essayResponse.data && (essayResponse.data.success || essayResponse.data.essayAssignment?._id)) {
+                        // Format essay assignment to match expected AssignmentDetails structure
+                        const essayData = essayResponse.data.essayAssignment || essayResponse.data;
+                        setAssignment(essayData);
+                        setLoading(false);
+                        setIsEssay(true);
+                        setIsQuiz(false);
+                        return; // Successfully found essay, exit function
+                    }
+                } catch (essayError) {
+                    // Essay not found either
+                    throw new Error('Assignment not found in either quiz or essay collections');
+                }
+
+                // If we get here, neither endpoint returned valid data
+                setError('Failed to load assignment information');
+                toast.error('Failed to load assignment information');
+
+            } catch (error) {
+                console.error('Error fetching assignment details:', error);
+                setError('Failed to load assignment information. Please try again later.');
+                toast.error('Error fetching assignment details');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        if (apiUrl) {
+            fetchAssignmentDetails();
+        }
+    }, [id, apiUrl]);
+
     const handleSignIn = async () => {
-        try{
-            const response = await axios.post(`${apiUrl}/api/v1/login-user`,{
+        // console.log(user, assignment, formData, rememberMe);
+        // console.log(user?.batch, assignment?.intendedBatch, user?.repeatingBatch);
+        try {
+            const response = await axios.post(`${apiUrl}/api/v1/login-user`, {
                 registrationNumber: formData.registrationNumber,
                 password: formData.password,
             })
 
-            if(response.status === 200 || response.data.success){
+            if ((response.status === 200 || response.data.success)) {
+                // Check if the user is already logged in
                 const token = response.data.accessToken; // accesstoken
                 sessionStorage.setItem('name', response.data.user.name);
-                if (rememberMe) {
-                    localStorage.setItem('token', token);
-                } else {
-                    sessionStorage.setItem('token', token);
+                setBatch(response.data.user.batch);
+                setUser(response.data.user);
+
+                console.log(user, assignment, formData, response.data.user, rememberMe);
+                console.log(user?.batch, assignment?.intendedBatch, user?.repeatingBatch, batch);
+
+                if (assignment?.intendedBatch === user?.batch || assignment?.intendedBatch === user?.repeatingBatch) {
+                    if (assignment?.intendedBatch === user?.batch || assignment?.intendedBatch === user?.repeatingBatch) {
+                        if (assignment?.attemptedStudents && user?._id && assignment.attemptedStudents.includes(user._id)) {
+                            // alert('You have already attempted this assignment.');
+                            toast.error('You have already attempted this assignment.');
+                        }
+                        else {
+                            // update the attemptedStudents array in the assignment
+
+
+
+                            if (rememberMe) {
+                                localStorage.setItem('token', token);
+                            } else {
+                                sessionStorage.setItem('token', token);
+                            }
+                            setUser(response.data.user)
+                            toast.success('Sign in successful!');
+
+                            //try for mcq
+                            if (isQuiz) {
+                                try {
+                                    await axios.put(`${apiUrl}/api/v1/${assignment?._id}/attemptedStudents`, {
+                                        studentId: user?._id,
+                                        assignmentId: assignment?._id,
+                                    }, {
+                                        headers: {
+                                            'Content-Type': 'application/json'
+                                        }
+                                    })
+                                    router.push(`/waiting/${id}`);
+
+                                } catch (error) {
+                                    console.error('Error updating attempted students for quiz:', error);
+                                }
+                            }
+                            else if (isEssay) {
+                                //try for essay
+                                try {
+                                    await axios.put(`${apiUrl}/api/v1/essay/${assignment?._id}/attemptedStudents`, {
+                                        studentId: user?._id,
+                                        assignmentId: assignment?._id,
+                                    }, {
+                                        headers: {
+                                            'Content-Type': 'application/json'
+                                        }
+                                    })
+                                    router.push(`/waiting/${id}`);
+
+                                } catch (error) {
+                                    throw new Error('Failed to update attempted students for either essay or mcq');
+                                }
+                            }
+                        }
+                    }
+                    else {
+                        // alert('You are not eligible for this assignment.');
+                        toast.error('You are not eligible for this assignment.');
+                    }
                 }
-                setUser(response.data.user)
-                toast.success('Sign in successful!');
-                
-                router.push(`/waiting/${id}`);
             }
-            else{
-                alert('Invalid credentials')
+            else {
+                // alert('Invalid credentials or you are not eligible for this assignment.');
                 toast.error('Invalid credentials');
             }
         }
-        catch(error){
+        catch (error) {
             // console.error('Error during sign in:', error);
             alert(`An error occurred. Please try again. ${error}`);
             toast.error('Error during sign in');
@@ -75,7 +219,7 @@ const SignIn = () => {
         <div className='w-full h-screen flex justify-center items-center'>
             <div className="w-[830px] h-[640px] flex flex-col justify-center items-center gap-[42px]">
                 <div className="self-stretch h-[25px] text-center text-black text-[32px] font-bold font-['Inter']">Sign in</div>
-                <Image className="w-[273px] h-60" src="/SignIn.png" alt='sign in image' width={380} height={380}  />
+                <Image className="w-[273px] h-60" src="/SignIn.png" alt='sign in image' width={380} height={380} />
                 <div className="self-stretch flex flex-col justify-center items-center gap-[20px]">
                     <div className="flex gap-[86px]">
                         <div className="h-[68px] relative">

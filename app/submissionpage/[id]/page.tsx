@@ -225,7 +225,7 @@ const SubmissionPage: React.FC = () => {
                 }
             }
         } catch (error) {
-            console.error('Submission error details:', error);
+            // console.error('Submission error details:', error);
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
             alert(`An error occurred during submission: ${errorMessage}. Please try again.`);
         } finally {

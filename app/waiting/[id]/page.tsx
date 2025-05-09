@@ -21,6 +21,7 @@ interface AssignmentDetails {
   endDate: string;
   teacherId: string;
   success?: boolean;
+  intendedBatch: number;
 }
 
 const WaitingPage = () => {
