@@ -24,6 +24,7 @@ interface AssignmentDetails {
     teacherId: string;
     success?: boolean;
     intendedBatch: number;
+    attemptedStudents: string[];
 }
 
 const SignIn = () => {
@@ -33,6 +34,8 @@ const SignIn = () => {
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
     const [batch, setBatch] = useState<number | null>(null);
+    const [isEssay, setIsEssay] = useState<boolean>(false);
+    const [isQuiz, setIsQuiz] = useState<boolean>(false);
 
     const [formData, setFormData] = useState({
         registrationNumber: '',
@@ -77,6 +80,8 @@ const SignIn = () => {
                     if (quizResponse.data && (quizResponse.data.success || quizResponse.data._id)) {
                         setAssignment(quizResponse.data.assignment || quizResponse.data);
                         setLoading(false);
+                        setIsQuiz(true);
+                        setIsEssay(false);
                         return; // Successfully found quiz, exit function
                     }
                 } catch (quizError) {
@@ -91,6 +96,8 @@ const SignIn = () => {
                         const essayData = essayResponse.data.essayAssignment || essayResponse.data;
                         setAssignment(essayData);
                         setLoading(false);
+                        setIsEssay(true);
+                        setIsQuiz(false);
                         return; // Successfully found essay, exit function
                     }
                 } catch (essayError) {
@@ -136,19 +143,64 @@ const SignIn = () => {
                 console.log(user?.batch, assignment?.intendedBatch, user?.repeatingBatch, batch);
 
                 if (assignment?.intendedBatch === user?.batch || assignment?.intendedBatch === user?.repeatingBatch) {
-                    if (rememberMe) {
-                        localStorage.setItem('token', token);
-                    } else {
-                        sessionStorage.setItem('token', token);
-                    }
-                    setUser(response.data.user)
-                    toast.success('Sign in successful!');
+                    if (assignment?.intendedBatch === user?.batch || assignment?.intendedBatch === user?.repeatingBatch) {
+                        if (assignment?.attemptedStudents && user?._id && assignment.attemptedStudents.includes(user._id)) {
+                            // alert('You have already attempted this assignment.');
+                            toast.error('You have already attempted this assignment.');
+                        }
+                        else {
+                            // update the attemptedStudents array in the assignment
 
-                    router.push(`/waiting/${id}`);
-                }
-                else{
-                    // alert('You are not eligible for this assignment.');
-                    toast.error('You are not eligible for this assignment.');
+
+
+                            if (rememberMe) {
+                                localStorage.setItem('token', token);
+                            } else {
+                                sessionStorage.setItem('token', token);
+                            }
+                            setUser(response.data.user)
+                            toast.success('Sign in successful!');
+
+                            //try for mcq
+                            if (isQuiz) {
+                                try {
+                                    await axios.put(`${apiUrl}/api/v1/${assignment?._id}/attemptedStudents`, {
+                                        studentId: user?._id,
+                                        assignmentId: assignment?._id,
+                                    }, {
+                                        headers: {
+                                            'Content-Type': 'application/json'
+                                        }
+                                    })
+                                    router.push(`/waiting/${id}`);
+
+                                } catch (error) {
+                                    console.error('Error updating attempted students for quiz:', error);
+                                }
+                            }
+                            else if (isEssay) {
+                                //try for essay
+                                try {
+                                    await axios.put(`${apiUrl}/api/v1/essay/${assignment?._id}/attemptedStudents`, {
+                                        studentId: user?._id,
+                                        assignmentId: assignment?._id,
+                                    }, {
+                                        headers: {
+                                            'Content-Type': 'application/json'
+                                        }
+                                    })
+                                    router.push(`/waiting/${id}`);
+
+                                } catch (error) {
+                                    throw new Error('Failed to update attempted students for either essay or mcq');
+                                }
+                            }
+                        }
+                    }
+                    else {
+                        // alert('You are not eligible for this assignment.');
+                        toast.error('You are not eligible for this assignment.');
+                    }
                 }
             }
             else {
