@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import axios from 'axios';
-// import Image from 'next/image';
 import { toast } from "sonner";
 
 interface TimeRemaining {
@@ -33,6 +32,7 @@ const WaitingPage = () => {
   const [timeRemaining, setTimeRemaining] = useState<TimeRemaining | null>(null);
   const [currentTime, setCurrentTime] = useState<Date>(new Date());
   const [apiUrl, setApiUrl] = useState<string>('');
+  const [quizStatus, setQuizStatus] = useState<'pending' | 'active' | 'expired'>('pending');
 
   // Set API URL based on environment
   useEffect(() => {
@@ -59,7 +59,7 @@ const WaitingPage = () => {
           if (quizResponse.data && (quizResponse.data.success || quizResponse.data._id)) {
             setAssignment(quizResponse.data.assignment || quizResponse.data);
             setLoading(false);
-            return; // Successfully found quiz, exit function
+            return;
           }
         } catch (quizError) {
           // Quiz not found, continue to try essay endpoint
@@ -69,18 +69,15 @@ const WaitingPage = () => {
         try {
           const essayResponse = await axios.get(`${apiUrl}/api/v1/essay/${id}?forWaiting=true`);
           if (essayResponse.data && (essayResponse.data.success || essayResponse.data.essayAssignment?._id)) {
-            // Format essay assignment to match expected AssignmentDetails structure
             const essayData = essayResponse.data.essayAssignment || essayResponse.data;
             setAssignment(essayData);
             setLoading(false);
-            return; // Successfully found essay, exit function
+            return;
           }
         } catch (essayError) {
-          // Essay not found either
           throw new Error('Assignment not found in either quiz or essay collections');
         }
         
-        // If we get here, neither endpoint returned valid data
         setError('Failed to load assignment information');
         toast.error('Failed to load assignment information');
         
@@ -107,44 +104,52 @@ const WaitingPage = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Calculate time remaining until assignment starts
+  // Calculate time remaining and check quiz status
   useEffect(() => {
     if (!assignment) return;
 
-    const calculateTimeRemaining = (): TimeRemaining | null => {
+    const calculateTimeStatus = (): void => {
       const startDate = new Date(assignment.startDate);
+      const endDate = new Date(assignment.endDate);
       const now = new Date();
       
-      // If assignment has already started, redirect to the module page
-      if (now >= startDate) {
-        router.push(`/modulepage/${id}`);
-        return null;
+      if (now > endDate) {
+        setQuizStatus('expired');
+        return;
       }
       
-      // Calculate time difference
+      if (now >= startDate) {
+        setQuizStatus('active');
+        return;
+      }
+      
+      // If assignment hasn't started yet, calculate time remaining
+      setQuizStatus('pending');
       const difference = startDate.getTime() - now.getTime();
       
-      return {
+      setTimeRemaining({
         days: Math.floor(difference / (1000 * 60 * 60 * 24)),
         hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
         minutes: Math.floor((difference / (1000 * 60)) % 60),
         seconds: Math.floor((difference / 1000) % 60)
-      };
+      });
     };
 
-    const updateTimeRemaining = () => {
-      setTimeRemaining(calculateTimeRemaining());
+    const updateTimeStatus = () => {
+      calculateTimeStatus();
     };
 
-    updateTimeRemaining();
-    const timer = setInterval(updateTimeRemaining, 1000);
+    updateTimeStatus();
+    const timer = setInterval(updateTimeStatus, 1000);
 
     return () => clearInterval(timer);
-  }, [assignment, currentTime, id, router]);
+  }, [assignment, currentTime]);
 
   // Handle proceed to assignment
   const handleProceed = () => {
-    router.push(`/modulepage/${id}`);
+    if (quizStatus === 'active') {
+      router.push(`/modulepage/${id}`);
+    }
   };
 
   if (loading) {
@@ -199,14 +204,19 @@ const WaitingPage = () => {
       <div className="max-w-2xl w-full bg-white rounded-lg shadow-md overflow-hidden">
         <div className="bg-green-500 p-6 text-white">
           <h1 className="text-2xl font-bold font-['Inter']">{assignment.title}</h1>
-          <p className="mt-1 text-green-50">Waiting for assignment to start</p>
+          <p className="mt-1 text-green-50">
+            {quizStatus === 'pending' ? 'Waiting for assignment to start' : 
+             quizStatus === 'active' ? 'Assignment is active' : 'Assignment has expired'}
+          </p>
         </div>
         
         <div className="p-6">
           <div className="mb-8 flex justify-center">
-            {/* You can replace this with your own waiting image */}
             <div className="w-48 h-48 bg-green-200 rounded-full flex items-center justify-center">
-              <div className="text-6xl">⏱️</div>
+              <div className="text-6xl">
+                {quizStatus === 'pending' ? '⏱️' : 
+                 quizStatus === 'active' ? '🚀' : '❌'}
+              </div>
             </div>
           </div>
           
@@ -223,10 +233,18 @@ const WaitingPage = () => {
                 <p className="text-sm text-gray-500">Start Time</p>
                 <p className="font-medium">{new Date(assignment.startDate).toLocaleString()}</p>
               </div>
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <p className="text-sm text-gray-500">End Time</p>
+                <p className="font-medium">{new Date(assignment.endDate).toLocaleString()}</p>
+              </div>
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <p className="text-sm text-gray-500">Current Status</p>
+                <p className="font-medium capitalize">{quizStatus}</p>
+              </div>
             </div>
           </div>
           
-          {timeRemaining ? (
+          {quizStatus === 'pending' && timeRemaining ? (
             <div className="bg-gray-50 rounded-lg p-6 mb-6">
               <h2 className="text-lg font-semibold text-gray-800 mb-4 text-center">Time Until Assignment Starts</h2>
               
@@ -253,7 +271,7 @@ const WaitingPage = () => {
                 This page will automatically redirect you when the assignment starts
               </p>
             </div>
-          ) : (
+          ) : quizStatus === 'active' ? (
             <div className="bg-green-50 rounded-lg p-6 mb-6">
               <h2 className="text-lg font-semibold text-gray-800 mb-2 text-center">Assignment has started!</h2>
               <p className="text-center text-gray-600 mb-4">
@@ -266,15 +284,30 @@ const WaitingPage = () => {
                 Proceed to Assignment
               </button>
             </div>
+          ) : (
+            <div className="bg-red-50 rounded-lg p-6 mb-6">
+              <h2 className="text-lg font-semibold text-gray-800 mb-2 text-center">Assignment has expired</h2>
+              <p className="text-center text-gray-600 mb-4">
+                The time window for this assignment has passed. You can no longer attempt it.
+              </p>
+              <button
+                onClick={() => router.push('/')}
+                className="w-full py-3 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors focus:outline-none font-bold font-['Inter'] tracking-wider"
+              >
+                Return to Home
+              </button>
+            </div>
           )}
           
           <div className="bg-yellow-50 rounded-lg p-4">
             <div className="flex items-start">
               <span className="text-yellow-500 mr-2 mt-0.5">⚠️</span>
               <p className="text-sm text-gray-700">
-                Please make sure you&apos;re ready before the assignment starts. Once you begin, 
-                the timer will start counting down and you&apos;ll need to complete all questions 
-                within the time limit.
+                {quizStatus === 'pending' ? 
+                  "Please make sure you're ready before the assignment starts. Once you begin, the timer will start counting down and you'll need to complete all questions within the time limit." :
+                  quizStatus === 'active' ?
+                  "The assignment is currently active. Make sure to complete it before the end time." :
+                  "This assignment can no longer be attempted as the time window has passed."}
               </p>
             </div>
           </div>
