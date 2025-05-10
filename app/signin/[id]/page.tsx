@@ -231,7 +231,7 @@ const SignIn = () => {
                             <input type="password" id="password" value={formData.password} onChange={handleChange} className="bg-green-200 border border-gray-300 text-black text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 placeholder-black" placeholder="Password" />
                         </div>
                     </div>
-                    <div className="flex justify-between items-center w-full mt-4">
+                    {/*<div className="flex justify-between items-center w-full mt-4">
                         <div className="flex items-center">
                             <input id="rememberMe" type="radio" checked={rememberMe} onChange={handleRememberMeChange} name="default-radio" className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" />
                             <label className="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Remember Me</label>
@@ -239,7 +239,7 @@ const SignIn = () => {
                         <div className="flex items-center">
                             <div className="w-[169px] h-4 text-black text-xl font-medium font-['Inter'] cursor-pointer">Forgot Password ?</div>
                         </div>
-                    </div>
+                    </div>*/}
                 </div>
                 <button
                     type="button"
