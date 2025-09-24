@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { UserProvider } from './../context/UserContext'; // Adjust the path as necessary
+import { UserProvider } from "./../context/UserContext";
 import { QuizProvider } from "@/context/QuizContext";
 import { EssayProvider } from "@/context/EssayContext";
 import { Toaster } from "sonner";
@@ -20,6 +20,19 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <script
+          type="text/javascript"
+          dangerouslySetInnerHTML={{
+            __html: `(function(c,l,a,r,i,t,y){
+              c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+              t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/${"tflhyejrmb"}";
+              y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+            })(window, document, "clarity", "script", "tflhyejrmb");`,
+          }}
+        />
+        
+      </head>
       <body className={inter.className}>
         <UserProvider>
           <QuizProvider>
