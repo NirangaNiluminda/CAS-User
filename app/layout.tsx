@@ -24,30 +24,14 @@ export default function RootLayout({
         <script
           type="text/javascript"
           dangerouslySetInnerHTML={{
-            __html: `!function(c, l, a, r, i, t, y) {
-        a[c]("metadata", (function() {
-          a[c]("set", "C_IS", "0")
-        }), !1, !0);
-        if (a[c].v || a[c].t) return a[c]("event", c, "dup." + i.projectId);
-        a[c].t = !0,
-        (t = l.createElement(r)).async = !0,
-        t.src = "https://scripts.clarity.ms/0.8.30/clarity.js",
-        (y = l.getElementsByTagName(r)[0]).parentNode.insertBefore(t, y),
-        a[c]("start", i),
-        a[c].q.unshift(a[c].q.pop()),
-        a[c]("set", "C_IS", "0")
-      }("clarity", document, window, "script", {
-        "projectId": "tflhyejrmb",  // Your project ID
-        "upload": "https://y.clarity.ms/collect",  // Matches MO's endpoint
-        "expire": 365,
-        "cookies": ["_uetmsclkid", "_uetvid"],  // Optional: For MS Ads integration if needed
-        "track": true,
-        "content": true,
-        "dob": 2093  // Optional: Age gate placeholder (set to future year for adults)
-      });`,
+            __html: `(function(c,l,a,r,i,t,y){
+              c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+              t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/${"tflhyejrmb"}";
+              y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+            })(window, document, "clarity", "script", "tflhyejrmb");`,
           }}
         />
-
+        
       </head>
       <body className={inter.className}>
         <UserProvider>
