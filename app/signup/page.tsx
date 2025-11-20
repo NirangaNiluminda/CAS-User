@@ -12,11 +12,12 @@ const SignUp: React.FC = () => {
     name: '',
     email: '',
     registrationNumber: '',
+    batch: '',
     password: '',
     confirmPassword: '',
   })
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.id]: e.target.value })
   }
   const [apiUrl, setApiUrl] = useState('');
@@ -28,7 +29,7 @@ const SignUp: React.FC = () => {
         setApiUrl('http://localhost:4000');
       } else {
         //setApiUrl(`${process.env.AWS_URL}`);
-        setApiUrl( process.env.NEXT_PUBLIC_DEPLOYMENT_URL || 'http://52.64.209.177:4000');
+        setApiUrl(process.env.NEXT_PUBLIC_DEPLOYMENT_URL || 'http://52.64.209.177:4000');
       }
     }
   }, []);
@@ -43,23 +44,27 @@ const SignUp: React.FC = () => {
       alert('Passwords do not match')
       return
     }
-
+    if (!formData.batch) {
+      alert('Please select your batch')
+      return
+    }
     try {
       const response = await axios.post(`${apiUrl}/api/v1/registration`, {
         name: formData.name,
         email: formData.email,
         password: formData.password,
         registrationNumber: formData.registrationNumber,
+        batch: parseInt(formData.batch),
       });
 
       if (response.status === 201 || response.data.success) {
         if (response.data.activationToken) {
-            const token = response.data.activationToken;
-            alert(`Registration successful! Please check your email to activate your account.`);
-            router.push(`/activate?token=${token}`);
+          const token = response.data.activationToken;
+          alert(`Registration successful! Please check your email to activate your account.`);
+          router.push(`/activate?token=${token}`);
         } else {
-            // Registration successful, and no activation needed
-            router.push('/dashboard');
+          // Registration successful, and no activation needed
+          router.push('/dashboard');
         }
       } else {
         // Handle error response
@@ -91,7 +96,24 @@ const SignUp: React.FC = () => {
           <label htmlFor="email" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Email</label>
           <input type="email" id="email" value={formData.email} onChange={handleChange} className="bg-green-200 border border-gray-300 text-black text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 placeholder-black" placeholder="name@flowbite.com" />
         </div>
-
+        <div className="h-[68px] relative w-full">
+          <label htmlFor="batch" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Batch</label>
+          <select
+            id="batch"
+            value={formData.batch}
+            onChange={handleChange}
+            className="bg-green-200 border border-gray-300 text-black text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
+          >
+            <option value="">Select your batch</option>
+            <option value="22">Batch 22</option>
+            <option value="23">Batch 23</option>
+            <option value="24">Batch 24</option>
+            <option value="17">Batch 25</option>
+            <option value="18">Batch 26</option>
+            <option value="19">Batch 27</option>
+            <option value="20">Batch 28</option>
+          </select>
+        </div>
         <div className="h-[68px] relative w-full">
           <label htmlFor="password" className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Password</label>
           <input type="password" id="password" value={formData.password} onChange={handleChange} className="bg-green-200 border border-gray-300 text-black text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 placeholder-black" placeholder="Password" />
