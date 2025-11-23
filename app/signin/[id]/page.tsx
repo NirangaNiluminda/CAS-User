@@ -135,54 +135,23 @@ const SignIn = () => {
                 const token = response.data.accessToken;
 
                 sessionStorage.setItem('name', loggedInUser.name);
+                sessionStorage.setItem('studentId', loggedInUser._id);
                 setBatch(loggedInUser.batch);
                 setUser(loggedInUser);
 
                 // Use loggedInUser instead of user state
                 if (assignment?.intendedBatch === loggedInUser.batch || assignment?.intendedBatch === loggedInUser.repeatingBatch) {
-                    if (assignment?.attemptedStudents && loggedInUser._id && assignment.attemptedStudents.includes(loggedInUser._id)) {
-                        toast.error('You have already attempted this assignment.');
+                    // Store token
+                    if (rememberMe) {
+                        localStorage.setItem('token', token);
                     } else {
-                        // Store token
-                        if (rememberMe) {
-                            localStorage.setItem('token', token);
-                        } else {
-                            sessionStorage.setItem('token', token);
-                        }
-
-                        toast.success('Sign in successful!');
-
-                        // Update attempted students and navigate
-                        if (isQuiz) {
-                            try {
-                                await axios.put(`${apiUrl}/api/v1/${assignment?._id}/attemptedStudents`, {
-                                    studentId: loggedInUser._id, // Use loggedInUser._id
-                                    assignmentId: assignment?._id,
-                                }, {
-                                    headers: {
-                                        'Content-Type': 'application/json'
-                                    }
-                                });
-                                router.push(`/waiting/${id}`);
-                            } catch (error) {
-                                console.error('Error updating attempted students for quiz:', error);
-                            }
-                        } else if (isEssay) {
-                            try {
-                                await axios.put(`${apiUrl}/api/v1/essay/${assignment?._id}/attemptedStudents`, {
-                                    studentId: loggedInUser._id, // Use loggedInUser._id
-                                    assignmentId: assignment?._id,
-                                }, {
-                                    headers: {
-                                        'Content-Type': 'application/json'
-                                    }
-                                });
-                                router.push(`/waiting/${id}`);
-                            } catch (error) {
-                                console.error('Error updating attempted students for essay:', error);
-                            }
-                        }
+                        sessionStorage.setItem('token', token);
                     }
+
+                    toast.success('Sign in successful!');
+
+                    // Just navigate to waiting page
+                    router.push(`/waiting/${id}`);
                 } else {
                     toast.error('You are not eligible for this assignment.');
                 }
