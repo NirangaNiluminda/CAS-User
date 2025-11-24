@@ -9,7 +9,18 @@ import { useQuiz } from '@/context/QuizContext';
 import { Card, CardContent } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
 import { Alert, AlertDescription } from "../../components/ui/alert";
-import { ArrowLeft, Send, CheckCircle2 } from 'lucide-react';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/app/components/ui/alert-dialog";
+import { ArrowLeft, Send, CheckCircle2, AlertTriangle } from 'lucide-react';
+
 const SubmissionPage: React.FC = () => {
     const router = useRouter();
     const { id } = useParams();
@@ -38,6 +49,7 @@ const SubmissionPage: React.FC = () => {
     const [isEssay, setIsEssay] = useState(false);
     const [savedAnswers, setSavedAnswers] = useState([]);
     const [submissionInProgress, setSubmissionInProgress] = useState(false);
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
 
     useEffect(() => {
         const savedProgress = sessionStorage.getItem('quizProgress');
@@ -92,22 +104,23 @@ const SubmissionPage: React.FC = () => {
         router.push(`/assignment/${id}`);
     };
 
-    const handleSubmit = async () => {
-        if (!window.confirm("Are you sure you want to submit? This action cannot be undone.")) {
-            return;
-        }
-    
+    const handleSubmitClick = () => {
+        setIsDialogOpen(true);
+    };
+
+    const handleConfirmSubmit = async () => {
+        setIsDialogOpen(false);
         setSubmissionInProgress(true);
         const apiUrl = window.location.hostname === 'localhost'
             ? 'http://localhost:4000'
             : process.env.NEXT_PUBLIC_DEPLOYMENT_URL;
-    
+
         try {
             // Try to complete the session - use a more generic assignment ID
-            const assignmentId = isQuiz 
-                ? quizData?.assignment?._id || id 
+            const assignmentId = isQuiz
+                ? quizData?.assignment?._id || id
                 : essayData?.essayAssignment?._id || id;
-            
+
             if (user?._id && assignmentId) {
                 try {
                     const sessionResponse = await fetch(`${apiUrl}/api/v1/quiz-session/complete`, {
@@ -119,7 +132,7 @@ const SubmissionPage: React.FC = () => {
                             timestamp: new Date().toISOString()
                         })
                     });
-                    
+
                     if (sessionResponse.ok) {
                         console.log('Session completed successfully');
                     } else {
@@ -130,7 +143,7 @@ const SubmissionPage: React.FC = () => {
                     // Continue with submission
                 }
             }
-    
+
             // Handle submission based on type
             if (isQuiz) {
                 const answers = JSON.parse(sessionStorage.getItem('selectedAnswerId') || '[]');
@@ -139,31 +152,31 @@ const SubmissionPage: React.FC = () => {
                     answers: answers,
                     startTime: new Date().toISOString()
                 };
-    
+
                 console.log("Quiz submission data:", submissionData);
-    
+
                 const response = await axios.post(
                     `${apiUrl}/api/v1/${id}/submit`,
                     submissionData,
-                    { 
+                    {
                         headers: { 'Content-Type': 'application/json' },
                         timeout: 10000 // Add timeout to avoid hanging requests
                     }
                 );
-    
+
                 if (response.data.success) {
                     sessionStorage.setItem('score', String(response.data.submission?.score));
                     router.push(`/scorepage/${id}`);
                 }
             } else if (isEssay) {
                 const essayAnswer = sessionStorage.getItem('EssayAnswer');
-                
+
                 // Make sure we have the essay ID
                 if (!essayData?.essayAssignment?._id) {
                     console.error("Missing essay assignment ID", essayData);
                     throw new Error("Essay assignment data is incomplete");
                 }
-    
+
                 // Create submission data with all required fields
                 const submissionData = {
                     assignmentId: essayData.essayAssignment._id,
@@ -176,9 +189,9 @@ const SubmissionPage: React.FC = () => {
                     }],
                     startTime: new Date().toISOString()
                 };
-    
+
                 console.log("Essay submission data:", submissionData);
-    
+
                 // Try with fetch instead of axios as an alternative
                 try {
                     const response = await fetch(`${apiUrl}/api/v1/essay/${id}/submit`, {
@@ -186,13 +199,13 @@ const SubmissionPage: React.FC = () => {
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(submissionData)
                     });
-                    
+
                     if (!response.ok) {
                         throw new Error(`Server returned ${response.status}: ${response.statusText}`);
                     }
-                    
+
                     const data = await response.json();
-                    
+
                     if (data.success) {
                         sessionStorage.setItem('score', String(data.submission?.score));
                         router.push(`/scorepage/${id}`);
@@ -201,7 +214,7 @@ const SubmissionPage: React.FC = () => {
                     }
                 } catch (fetchError) {
                     console.error("Fetch error:", fetchError);
-                    
+
                     // Fall back to axios as a second attempt with a different URL format
                     console.log("Trying alternative submission method...");
                     const altResponse = await axios.post(
@@ -210,12 +223,12 @@ const SubmissionPage: React.FC = () => {
                             ...submissionData,
                             essayId: id // Add explicit essay ID
                         },
-                        { 
+                        {
                             headers: { 'Content-Type': 'application/json' },
                             timeout: 15000
                         }
                     );
-                    
+
                     if (altResponse.data.success) {
                         sessionStorage.setItem('score', String(altResponse.data.submission?.score));
                         router.push(`/scorepage/${id}`);
@@ -265,8 +278,8 @@ const SubmissionPage: React.FC = () => {
                         <div className="grid grid-cols-5 gap-4 mb-8">
                             {Array.from({ length: totalQuestions }, (_, i) => (
                                 <Card key={i} className={`p-4 text-center ${savedAnswers[i] !== undefined
-                                        ? 'bg-green-50 border-green-500'
-                                        : 'bg-gray-50 border-gray-200'
+                                    ? 'bg-green-50 border-green-500'
+                                    : 'bg-gray-50 border-gray-200'
                                     }`}>
                                     <div className="text-2xl font-bold mb-2">{i + 1}</div>
                                     {savedAnswers[i] !== undefined && (
@@ -286,7 +299,7 @@ const SubmissionPage: React.FC = () => {
                             </Button>
 
                             <Button
-                                onClick={handleSubmit}
+                                onClick={handleSubmitClick}
                                 disabled={submissionInProgress}
                                 className="flex items-center gap-2 bg-green-500 hover:bg-green-600"
                             >
@@ -297,6 +310,31 @@ const SubmissionPage: React.FC = () => {
                     </CardContent>
                 </Card>
             </div>
+
+            <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <AlertDialogContent className="bg-white rounded-xl shadow-2xl border-0">
+                    <AlertDialogHeader>
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="p-2 bg-yellow-100 rounded-full">
+                                <AlertTriangle className="w-6 h-6 text-yellow-600" />
+                            </div>
+                            <AlertDialogTitle className="text-xl font-bold text-gray-900">Confirm Submission</AlertDialogTitle>
+                        </div>
+                        <AlertDialogDescription className="text-gray-500 text-base">
+                            Are you sure you want to submit your answers? This action cannot be undone and you won&apos;t be able to change your answers afterwards.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="mt-6">
+                        <AlertDialogCancel className="rounded-lg border-gray-200 hover:bg-gray-50 hover:text-gray-900">Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleConfirmSubmit}
+                            className="bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium px-6"
+                        >
+                            Yes, Submit
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 };

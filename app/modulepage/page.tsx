@@ -13,31 +13,41 @@ const ModulePage: React.FC = () => {
 
 
     return (
-        <div className="flex justify-center items-center w-screen h-screen bg-white">
-            <div className="flex flex-col justify-center items-center gap-12 p-4">
-                <div className="relative">
+        <div className="w-full min-h-screen flex justify-center items-center px-4">
+            <div className="w-full max-w-lg p-10 glass-card rounded-[2rem] flex flex-col justify-center items-center gap-10 animate-in fade-in zoom-in duration-700 premium-shadow">
+                <div className="relative w-56 h-56 rounded-3xl overflow-hidden border-[6px] border-green-100 shadow-2xl premium-shadow hover:scale-105 transition-all duration-500 group">
                     <Image
-                        className="w-56 h-56"
+                        className="object-cover group-hover:scale-110 transition-transform duration-700"
                         src="/module.jpg"
                         alt="Module Logo"
-                        width={380} height={380} 
+                        fill
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-emerald-600/10" />
+                    <div className="absolute inset-0 ring-1 ring-inset ring-green-200/30 rounded-3xl" />
+                </div>
+                <div className="text-center space-y-3">
+                    <h2 className="text-4xl font-black bg-gradient-to-r from-green-700 to-emerald-600 bg-clip-text text-transparent">Module A B C</h2>
+                    <p className="text-muted-foreground text-base font-medium">Enter the access code to continue</p>
+                </div>
+                
+                <div className="w-full space-y-3">
+                    <label className="text-sm font-semibold text-foreground">Password</label>
+                    <input 
+                        type="text" 
+                        id="index" 
+                        className="w-full px-5 py-4 input-premium text-foreground placeholder:text-muted-foreground text-center tracking-[0.5em] text-2xl font-bold" 
+                        placeholder="••••" 
+                        maxLength={4}
                     />
                 </div>
-                <div className="text-center text-black text-2xl font-bold font-inter">
-                    Module A B C
-                </div>
-                <div className="relative">
-                    <div className="h-[68px] relative">
-                        <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Password</label>
-                        <input type="text" id="index" className="bg-green-200 border border-gray-300 text-black text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 placeholder-black" placeholder="XXXX" />
-                    </div>
-                </div>
+
                 <button
                     type="button"
-                    className="focus:outline-none text-black bg-[#0cdc09] hover:bg-green-800 hover:border hover:border-[#0cdc09] focus:ring-4 focus:ring-green-300 font-bold font-['Inter'] tracking-[3.60px] rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-[#0cdc09] dark:hover:bg-transparent dark:focus:ring-green-800 transform transition-transform duration-300 hover:scale-x-110"
+                    className="w-full py-4 px-8 gradient-green text-white font-bold text-lg rounded-2xl shadow-xl shadow-green-300/40 hover:shadow-2xl hover:shadow-green-400/50 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 relative overflow-hidden group"
                     onClick={() => router.push('/guidelines')}
                 >
-                    Enter
+                    <span className="relative z-10">Enter Module</span>
+                    <div className="absolute inset-0 bg-gradient-to-r from-green-400/0 via-white/20 to-green-400/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
                 </button>
             </div>
         </div>

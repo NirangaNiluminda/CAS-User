@@ -16,11 +16,16 @@ const QuizPage = () => {
     const [isEssay, setIsEssay] = useState(false);
     const router = useRouter();
     const { id } = useParams();
-    const timeLimit = localStorage.getItem('timeLimit');
+    // Fix: Use state for timeLimit to avoid SSR error
+    const [timeLimit, setTimeLimit] = useState<string | null>(null);
+    const [timeLimitChecked, setTimeLimitChecked] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [sessionStarted, setSessionStarted] = useState(false);
     const [apiUrl, setApiUrl] = useState('');
-    
+    // Fix: Add auth check state
+    const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+
     interface QuizData {
         assignment: {
             questions: {
@@ -50,12 +55,12 @@ const QuizPage = () => {
         count?: number;
         key?: string;
     }
-    
+
     interface SelectedAnswer {
         questionId: string;
         selectedOption: string;
     }
-    
+
     const [quizData, setQuizData] = useState<QuizData | null>(null);
     const [essayData, setEssayData] = useState<EssayData | null>(null);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -72,7 +77,7 @@ const QuizPage = () => {
     const [remainingTime, setRemainingTime] = useState(0);
     const [quizStartTime, setQuizStartTime] = useState<string | null>(null);
     const [quizEndTime, setQuizEndTime] = useState<string | null>(null);
-    
+
     // Monitoring and statistics state
     const [violations, setViolations] = useState<Violation[]>([]);
     const [isMonitoring, setIsMonitoring] = useState(false);
@@ -81,17 +86,33 @@ const QuizPage = () => {
         completedStudents: 0
     });
     const [isLiveStatsLoading, setIsLiveStatsLoading] = useState(false);
-    
-    // Initialize API URL
+
+    // Initialize API URL and Check Authentication
     useEffect(() => {
         if (typeof window !== 'undefined') {
-            const url = window.location.hostname === 'localhost' 
-                ? 'http://localhost:4000' 
+            // Set API URL
+            const url = window.location.hostname === 'localhost'
+                ? 'http://localhost:4000'
                 : process.env.NEXT_PUBLIC_DEPLOYMENT_URL || '';
             setApiUrl(url);
+
+            // Check Authentication
+            const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+            if (!token) {
+                // Redirect to sign-in if not authenticated
+                router.push(`/signin/${id}`);
+            } else {
+                setIsAuthenticated(true);
+                setIsCheckingAuth(false);
+
+                // Load timeLimit safely
+                const limit = localStorage.getItem('timeLimit');
+                setTimeLimit(limit);
+                setTimeLimitChecked(true);
+            }
         }
-    }, []);
-    
+    }, [id, router]);
+
     // Handle violations from QuizMonitor
     const handleViolation = (violation: Violation) => {
         setViolations(prev => [...prev, violation]);
@@ -99,7 +120,7 @@ const QuizPage = () => {
             console.error('No user found');
             return;
         }
-        
+
         fetch(`${apiUrl}/api/v1/violations`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -111,7 +132,7 @@ const QuizPage = () => {
             })
         }).catch(err => console.error('Failed to log violation:', err));
     };
-    
+
     // Start session function
     const startSession = useCallback(async () => {
         if (!apiUrl || !id || !user?._id || sessionStarted) {
@@ -123,7 +144,7 @@ const QuizPage = () => {
             });
             return;
         }
-    
+
         try {
             const response = await fetch(`${apiUrl}/api/v1/quiz-session/start`, {
                 method: 'POST',
@@ -134,7 +155,7 @@ const QuizPage = () => {
                     timestamp: new Date().toISOString()
                 })
             });
-    
+
             if (response.ok) {
                 setSessionStarted(true);
                 console.log('Quiz session started successfully');
@@ -142,7 +163,7 @@ const QuizPage = () => {
                 const errorData = await response.json().catch(() => ({}));
                 console.error('Failed to start quiz session:', response.status, errorData);
             }
-        } catch (error : any) {
+        } catch (error: any) {
             console.error('Detailed error starting quiz session:', {
                 message: error.message,
                 stack: error.stack,
@@ -150,11 +171,11 @@ const QuizPage = () => {
             });
         }
     }, [apiUrl, id, user, sessionStarted]);
-    
+
     // Send heartbeat while quiz is active
     useEffect(() => {
         if (!sessionStarted || !apiUrl || !id || !user?._id) return;
-    
+
         const sendHeartbeat = async () => {
             try {
                 await fetch(`${apiUrl}/api/v1/quiz-session/heartbeat`, {
@@ -170,13 +191,13 @@ const QuizPage = () => {
                 console.error('Error sending heartbeat:', error);
             }
         };
-    
+
         // Send heartbeat immediately
         sendHeartbeat();
-    
+
         // Then set up interval
         const heartbeatInterval = setInterval(sendHeartbeat, 30000); // every 30 seconds
-    
+
         return () => clearInterval(heartbeatInterval);
     }, [sessionStarted, apiUrl, id, user]);
 
@@ -191,7 +212,7 @@ const QuizPage = () => {
             });
             return;
         }
-    
+
         try {
             const response = await fetch(`${apiUrl}/api/v1/quiz-session/complete`, {
                 method: 'POST',
@@ -202,7 +223,7 @@ const QuizPage = () => {
                     timestamp: new Date().toISOString()
                 })
             });
-    
+
             if (response.ok) {
                 console.log('Quiz session completed successfully');
             } else {
@@ -213,7 +234,7 @@ const QuizPage = () => {
             console.error('Error completing quiz session:', error);
         }
     }, [sessionStarted, apiUrl, id, user]);
-    
+
     // Complete session when component unmounts
     useEffect(() => {
         return () => {
@@ -227,11 +248,11 @@ const QuizPage = () => {
     const fetchLiveStats = useCallback(async () => {
         const quizId = quizData?.assignment?._id || essayData?.essayAssignment?._id;
         if (!quizId || !apiUrl) return;
-    
+
         try {
             setIsLiveStatsLoading(true);
             const response = await fetch(`${apiUrl}/api/v1/stats/${quizId}`);
-    
+
             if (response.ok) {
                 const data = await response.json();
                 setLiveStats({
@@ -245,11 +266,11 @@ const QuizPage = () => {
             setIsLiveStatsLoading(false);
         }
     }, [quizData, essayData, apiUrl]);
-    
+
     // Set up periodic stats fetching
     useEffect(() => {
         if (!quizData?.assignment?._id && !essayData?.essayAssignment?._id) return;
-        
+
         // Initial fetch
         fetchLiveStats();
 
@@ -260,7 +281,7 @@ const QuizPage = () => {
             clearInterval(statsInterval);
         };
     }, [fetchLiveStats, quizData, essayData]);
-    
+
     // Start monitoring when quiz loads
     useEffect(() => {
         if (!isLoading && (isQuiz || isEssay)) {
@@ -288,9 +309,11 @@ const QuizPage = () => {
             }
         }
     }, []);
-    
+
     // Initialize timer
     useEffect(() => {
+        if (!timeLimitChecked) return;
+
         const initializeTimer = () => {
             const storedStartTime = sessionStorage.getItem('quizStartTime');
             const storedEndTime = sessionStorage.getItem('quizEndTime');
@@ -345,7 +368,7 @@ const QuizPage = () => {
         };
 
         initializeTimer();
-    }, [timeLimit]);
+    }, [timeLimit, timeLimitChecked]);
 
     // Save progress to session storage
     useEffect(() => {
@@ -365,7 +388,7 @@ const QuizPage = () => {
     const handleAnswerClick = (index: number, questionId: string, selectedOption: string) => {
         setSelectedAnswer(index);
         const newSelectedAnswerId: SelectedAnswer[] = [...selectedAnswerId];
-        
+
         // Find and update existing answer for this question, or add new one
         const existingIndex = newSelectedAnswerId.findIndex(
             (item) => item.questionId === questionId
@@ -474,7 +497,7 @@ const QuizPage = () => {
         if (!apiUrl || !id) return;
 
         setIsLoading(true);
-        
+
         // Fetch quiz data
         fetch(`${apiUrl}/api/v1/${id}`)
             .then((response) => response.json())
@@ -508,7 +531,7 @@ const QuizPage = () => {
                 console.error('Error fetching essay data:', error);
                 setIsLoading(false);
             });
-    }, [id, apiUrl, startSession]);
+    }, [id, apiUrl, startSession, setEssay, setQuiz]);
 
     // Calculate progress percentage
     const calculateProgress = () => {
@@ -525,7 +548,7 @@ const QuizPage = () => {
                 const timeLeft = Math.max(0, Math.floor((end.getTime() - now.getTime()) / 1000));
 
                 setRemainingTime(timeLeft);
-                
+
                 // Auto-submit if time runs out
                 if (timeLeft <= 0) {
                     console.log("Time's up!");
@@ -544,7 +567,7 @@ const QuizPage = () => {
     }, [quizEndTime, id, router, completeSession]);
 
     // Loading indicator
-    if (isLoading) {
+    if (isCheckingAuth || isLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
@@ -566,7 +589,7 @@ const QuizPage = () => {
     return (
         <div className="min-h-screen bg-gray-50">
             {isMonitoring && <QuizMonitor onViolation={handleViolation} />}
-            
+
             {/* Top Progress Bar */}
             <div className="fixed top-0 left-0 w-full z-50">
                 <Progress value={calculateProgress()} className="h-2" />
