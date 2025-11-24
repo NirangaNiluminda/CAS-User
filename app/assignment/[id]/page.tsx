@@ -531,7 +531,7 @@ const QuizPage = () => {
                 console.error('Error fetching essay data:', error);
                 setIsLoading(false);
             });
-    }, [id, apiUrl, startSession]);
+    }, [id, apiUrl, startSession, setEssay, setQuiz]);
 
     // Calculate progress percentage
     const calculateProgress = () => {

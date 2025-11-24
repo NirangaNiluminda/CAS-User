@@ -321,7 +321,7 @@ const SubmissionPage: React.FC = () => {
                             <AlertDialogTitle className="text-xl font-bold text-gray-900">Confirm Submission</AlertDialogTitle>
                         </div>
                         <AlertDialogDescription className="text-gray-500 text-base">
-                            Are you sure you want to submit your answers? This action cannot be undone and you won't be able to change your answers afterwards.
+                            Are you sure you want to submit your answers? This action cannot be undone and you won&apos;t be able to change your answers afterwards.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter className="mt-6">

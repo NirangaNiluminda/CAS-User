@@ -133,7 +133,7 @@ const WaitingPage = () => {
     if (apiUrl) {
       fetchAssignmentDetails();
     }
-  }, [id, apiUrl]);
+  }, [id, apiUrl, studentId]);
 
   // Update current time every second
   useEffect(() => {
