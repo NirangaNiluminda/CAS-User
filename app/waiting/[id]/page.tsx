@@ -40,6 +40,7 @@ const WaitingPage = () => {
   const [isAttempted, setIsAttempted] = useState<boolean>(false);
   const [isQuiz, setIsQuiz] = useState<boolean>(false);
   const [isEssay, setIsEssay] = useState<boolean>(false);
+
   // Set API URL based on environment
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -47,10 +48,10 @@ const WaitingPage = () => {
         setApiUrl('http://localhost:4000');
       } else {
         setApiUrl(process.env.NEXT_PUBLIC_DEPLOYMENT_URL || 'http://52.64.209.177:4000');
-        setApiUrl(process.env.NEXT_PUBLIC_DEPLOYMENT_URL || 'http://52.64.209.177:4000');
       }
     }
   }, []);
+
   // Get student ID from user context or session storage
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -66,15 +67,14 @@ const WaitingPage = () => {
       }
     }
   }, []);
+
   // Fetch assignment details
   useEffect(() => {
     const fetchAssignmentDetails = async () => {
       if (!id || !apiUrl) return;
 
-
       try {
         setLoading(true);
-
 
         // Try fetching as quiz first
         try {
@@ -97,7 +97,6 @@ const WaitingPage = () => {
           // Quiz not found, continue to try essay endpoint
         }
 
-
         // If quiz not found, try fetching as essay
         try {
           const essayResponse = await axios.get(`${apiUrl}/api/v1/essay/${id}?forWaiting=true`);
@@ -119,10 +118,8 @@ const WaitingPage = () => {
           throw new Error('Assignment not found in either quiz or essay collections');
         }
 
-
         setError('Failed to load assignment information');
         toast.error('Failed to load assignment information');
-
 
       } catch (error) {
         console.error('Error fetching assignment details:', error);
@@ -156,23 +153,19 @@ const WaitingPage = () => {
       const endDate = new Date(assignment.endDate);
       const now = new Date();
 
-
       if (now > endDate) {
         setQuizStatus('expired');
         return;
       }
-
 
       if (now >= startDate) {
         setQuizStatus('active');
         return;
       }
 
-
       // If assignment hasn't started yet, calculate time remaining
       setQuizStatus('pending');
       const difference = startDate.getTime() - now.getTime();
-
 
       setTimeRemaining({
         days: Math.floor(difference / (1000 * 60 * 60 * 24)),
@@ -268,18 +261,6 @@ const WaitingPage = () => {
             </button>
           </CardContent>
         </Card>
-      <div className="w-full h-screen flex justify-center items-center bg-gray-50">
-        <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full">
-          <div className="text-center text-red-500 text-4xl mb-4">⚠️</div>
-          <h1 className="text-2xl font-bold text-center mb-4">Error</h1>
-          <p className="text-center mb-6">{error}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="w-full py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-all"
-          >
-            Try Again
-          </button>
-        </div>
       </div>
     );
   }
@@ -302,18 +283,6 @@ const WaitingPage = () => {
             </button>
           </CardContent>
         </Card>
-      <div className="w-full h-screen flex justify-center items-center bg-gray-50">
-        <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full">
-          <div className="text-center text-yellow-500 text-4xl mb-4">⚠️</div>
-          <h1 className="text-2xl font-bold text-center mb-4">Assignment Not Found</h1>
-          <p className="text-center mb-6">We couldn&apos;t find the assignment you&apos;re looking for.</p>
-          <button
-            onClick={() => router.push('/')}
-            className="w-full py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-all"
-          >
-            Go Home
-          </button>
-        </div>
       </div>
     );
   }
@@ -324,36 +293,18 @@ const WaitingPage = () => {
 
         {/* Left Column: Status & Timer */}
         <div className="space-y-6 order-2 lg:order-1">
+          <div className="mb-8">
+            <h1 className="text-4xl font-bold text-gray-900 tracking-tight mb-4">{assignment.title}</h1>
+            <p className="text-lg text-gray-600 leading-relaxed max-w-2xl">{assignment.description}</p>
+          </div>
+
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-gray-200 shadow-sm">
               <span className={`w-2 h-2 rounded-full ${quizStatus === 'active' ? 'bg-green-500 animate-pulse' :
                 quizStatus === 'pending' ? 'bg-yellow-500' : 'bg-red-500'
                 }`} />
               <span className="text-sm font-medium text-gray-600 capitalize">{quizStatus} Status</span>
-    <div className="w-full min-h-screen flex justify-center items-center bg-gray-50 p-4">
-      <div className="max-w-2xl w-full bg-white rounded-lg shadow-md overflow-hidden">
-        <div className="bg-green-500 p-6 text-white">
-          <h1 className="text-2xl font-bold font-['Inter']">{assignment.title}</h1>
-          <p className="mt-1 text-green-50">
-            {quizStatus === 'pending' ? 'Waiting for assignment to start' :
-              quizStatus === 'active' ? 'Assignment is active' : 'Assignment has expired'}
-          </p>
-        </div>
-
-        <div className="p-6">
-          <div className="mb-8 flex justify-center">
-            <div className="w-48 h-48 bg-green-200 rounded-full flex items-center justify-center">
-              <div className="text-6xl">
-                {quizStatus === 'pending' ? '⏱️' :
-                  quizStatus === 'active' ? '🚀' : '❌'}
-              </div>
             </div>
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 tracking-tight leading-tight">
-              {assignment.title}
-            </h1>
-            <p className="text-lg text-gray-500 max-w-md leading-relaxed">
-              {assignment.description || "Get ready to demonstrate your knowledge. Please review the details before starting."}
-            </p>
           </div>
 
           {quizStatus === 'pending' && timeRemaining && (
@@ -375,63 +326,21 @@ const WaitingPage = () => {
                     <span className="text-xs font-medium text-gray-400">{item.label}</span>
                   </div>
                 ))}
-
-          <div className="mb-6">
-            <h2 className="text-lg font-semibold text-gray-800 mb-2">Assignment Details</h2>
-            <p className="text-gray-600">{assignment.description}</p>
-
-            <div className="mt-4 grid grid-cols-2 gap-4">
-              <div className="bg-gray-50 p-3 rounded-lg">
-                <p className="text-sm text-gray-500">Time Limit</p>
-                <p className="font-medium">{assignment.timeLimit} minutes</p>
-              </div>
-              <div className="bg-gray-50 p-3 rounded-lg">
-                <p className="text-sm text-gray-500">Start Time</p>
-                <p className="font-medium">{new Date(assignment.startDate).toLocaleString()}</p>
-              </div>
-              <div className="bg-gray-50 p-3 rounded-lg">
-                <p className="text-sm text-gray-500">End Time</p>
-                <p className="font-medium">{new Date(assignment.endDate).toLocaleString()}</p>
-              </div>
-              <div className="bg-gray-50 p-3 rounded-lg">
-                <p className="text-sm text-gray-500">Current Status</p>
-                <p className="font-medium capitalize">{quizStatus}</p>
               </div>
             </div>
           )}
 
           {quizStatus === 'active' && (
             <div className="bg-green-50 rounded-2xl p-8 border border-green-100">
-              <div className="flex items-center gap-4 mb-4">
+              <div className="flex items-center gap-4 mb-6">
                 <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
                   <CheckCircle2 className="w-6 h-6 text-green-600" />
-          </div>
-
-          {quizStatus === 'pending' && timeRemaining ? (
-            <div className="bg-gray-50 rounded-lg p-6 mb-6">
-              <h2 className="text-lg font-semibold text-gray-800 mb-4 text-center">Time Until Assignment Starts</h2>
-
-              <div className="grid grid-cols-4 gap-3 text-center">
-                <div className="bg-white p-3 rounded-lg shadow-sm">
-                  <div className="text-2xl font-bold text-green-600">{timeRemaining.days}</div>
-                  <div className="text-xs text-gray-500">Days</div>
                 </div>
                 <div>
                   <h3 className="text-xl font-bold text-gray-900">Session is Live</h3>
                   <p className="text-green-700">You can now access the assignment.</p>
                 </div>
               </div>
-
-              <p className="text-center mt-4 text-sm text-gray-600">
-                This page will automatically redirect you when the assignment starts
-              </p>
-            </div>
-          ) : quizStatus === 'active' ? (
-            <div className="bg-green-50 rounded-lg p-6 mb-6">
-              <h2 className="text-lg font-semibold text-gray-800 mb-2 text-center">Assignment has started!</h2>
-              <p className="text-center text-gray-600 mb-4">
-                You can now proceed to enter the assignment.
-              </p>
               <button
                 onClick={handleProceed}
                 className="w-full py-4 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold text-lg shadow-lg shadow-green-200 transition-all flex items-center justify-center gap-2 group"
