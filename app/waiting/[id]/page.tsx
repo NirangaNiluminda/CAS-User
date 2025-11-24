@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import axios from 'axios';
 import { toast } from "sonner";
-import { Clock, Calendar, AlertCircle, CheckCircle2, XCircle, Loader2, ArrowRight } from 'lucide-react';
+import { Clock, Calendar, AlertCircle, CheckCircle2, XCircle, Loader2, ArrowRight, ListChecks } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card';
 
 interface TimeRemaining {
@@ -24,6 +24,7 @@ interface AssignmentDetails {
   teacherId: string;
   success?: boolean;
   intendedBatch: number;
+  guidelines?: string[];
 }
 
 const WaitingPage = () => {
@@ -423,6 +424,22 @@ const WaitingPage = () => {
               </div>
 
               <div className="mt-6 pt-6 border-t border-gray-100">
+                {assignment.guidelines && assignment.guidelines.length > 0 && (
+                  <div className="mb-6">
+                    <h3 className="text-sm font-medium text-gray-900 mb-3 flex items-center gap-2">
+                      <ListChecks className="w-4 h-4 text-blue-600" />
+                      Guidelines
+                    </h3>
+                    <ul className="space-y-2">
+                      {assignment.guidelines.map((guideline, index) => (
+                        <li key={index} className="flex items-start gap-2 text-sm text-gray-600">
+                          <span className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-1.5 flex-shrink-0" />
+                          <span>{guideline}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
                 <div className="bg-yellow-50 rounded-lg p-4 flex gap-3">
                   <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
                   <p className="text-sm text-yellow-800 leading-relaxed">
