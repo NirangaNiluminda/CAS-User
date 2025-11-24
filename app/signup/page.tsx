@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { toast } from 'sonner';
 
 const SignUp: React.FC = () => {
 
@@ -43,11 +44,15 @@ const SignUp: React.FC = () => {
     //   registrationNumber: formData.registrationNumber,
     // });
     if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match')
+      toast.error('Passwords do not match', {
+        duration: 2000,
+      });
       return
     }
     if (!formData.batch) {
-      alert('Please select your batch')
+      toast.error('PPlease select your batch', {
+        duration: 2000,
+      });
       return
     }
     try {
@@ -62,7 +67,9 @@ const SignUp: React.FC = () => {
       if (response.status === 201 || response.data.success) {
         if (response.data.activationToken) {
           const token = response.data.activationToken;
-          alert(`Registration successful! Please check your email to activate your account.`);
+          toast.success('Registration successful! Please check your email to activate your account.', {
+            duration: 2000,
+          });
           router.push(`/activate?token=${token}`);
         } else {
           // Registration successful, and no activation needed
@@ -70,12 +77,17 @@ const SignUp: React.FC = () => {
         }
       } else {
         // Handle error response
-        alert('Registration failed. Please try again.');
+        toast.error('Registration failed. Please try again.', {
+          duration: 2000,
+        });
+
       }
     } catch (error) {
       // Handle error
       console.error('Error during registration:', error);
-      alert('An error occurred. Please try again.');
+      toast.error('An error occurred. Please try again.', {
+        duration: 2000,
+      });
     }
   }
 
@@ -87,7 +99,7 @@ const SignUp: React.FC = () => {
         className="absolute top-6 left-6 p-3 rounded-xl bg-white/80 backdrop-blur-sm border-2 border-green-100 text-foreground hover:bg-green-50 hover:border-green-200 transition-all duration-300 shadow-lg hover:shadow-xl z-50 group"
       >
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="group-hover:-translate-x-1 transition-transform duration-300">
-          <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </button>
 
@@ -98,85 +110,85 @@ const SignUp: React.FC = () => {
         </div>
 
         <div className="w-full space-y-2">
-            <div className="space-y-0.5">
-                <label className="text-xs font-semibold text-foreground">Index</label>
-                <input type="text" id="registrationNumber" value={formData.registrationNumber} onChange={handleChange} className="w-full px-4 py-2 input-premium text-foreground placeholder:text-muted-foreground font-medium" placeholder="EG/XXXX/XXXX" />
-            </div>
+          <div className="space-y-0.5">
+            <label className="text-xs font-semibold text-foreground">Index</label>
+            <input type="text" id="registrationNumber" value={formData.registrationNumber} onChange={handleChange} className="w-full px-4 py-2 input-premium text-foreground placeholder:text-muted-foreground font-medium" placeholder="EG/XXXX/XXXX" />
+          </div>
 
-            <div className="space-y-0.5">
-                <label className="text-xs font-semibold text-foreground">Name</label>
-                <input type="text" id="name" value={formData.name} onChange={handleChange} className="w-full px-4 py-2 input-premium text-foreground placeholder:text-muted-foreground font-medium" placeholder="Perera A.B.C." />
-            </div>
+          <div className="space-y-0.5">
+            <label className="text-xs font-semibold text-foreground">Name</label>
+            <input type="text" id="name" value={formData.name} onChange={handleChange} className="w-full px-4 py-2 input-premium text-foreground placeholder:text-muted-foreground font-medium" placeholder="Perera A.B.C." />
+          </div>
 
-            <div className="space-y-0.5">
-                <label className="text-xs font-semibold text-foreground">Email</label>
-                <input type="email" id="email" value={formData.email} onChange={handleChange} className="w-full px-4 py-2 input-premium text-foreground placeholder:text-muted-foreground font-medium" placeholder="name@example.com" />
-            </div>
-            
-            <div className="space-y-0.5">
-                <label className="text-xs font-semibold text-foreground">Batch</label>
-                <select
-                    id="batch"
-                    value={formData.batch}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2 input-premium text-foreground font-medium"
-                >
-                    <option value="" className="bg-white text-muted-foreground">Select your batch</option>
-                    <option value="22" className="bg-white">Batch 22</option>
-                    <option value="23" className="bg-white">Batch 23</option>
-                    <option value="24" className="bg-white">Batch 24</option>
-                    <option value="17" className="bg-white">Batch 25</option>
-                    <option value="18" className="bg-white">Batch 26</option>
-                    <option value="19" className="bg-white">Batch 27</option>
-                    <option value="20" className="bg-white">Batch 28</option>
-                </select>
-            </div>
-            
-            <div className="space-y-0.5">
-                <label className="text-xs font-semibold text-foreground">Password</label>
-                <div className="relative">
-                    <input type={showPassword ? "text" : "password"} id="password" value={formData.password} onChange={handleChange} className="w-full px-4 py-2 pr-10 input-premium text-foreground placeholder:text-muted-foreground font-medium" placeholder="••••••••" />
-                    <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors"
-                    >
-                        {showPassword ? (
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                                <path d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                        ) : (
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                                <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                        )}
-                    </button>
-                </div>
-            </div>
+          <div className="space-y-0.5">
+            <label className="text-xs font-semibold text-foreground">Email</label>
+            <input type="email" id="email" value={formData.email} onChange={handleChange} className="w-full px-4 py-2 input-premium text-foreground placeholder:text-muted-foreground font-medium" placeholder="name@example.com" />
+          </div>
 
-            <div className="space-y-0.5">
-                <label className="text-xs font-semibold text-foreground">Confirm Password</label>
-                <div className="relative">
-                    <input type={showConfirmPassword ? "text" : "password"} id="confirmPassword" value={formData.confirmPassword} onChange={handleChange} className="w-full px-4 py-2 pr-10 input-premium text-foreground placeholder:text-muted-foreground font-medium" placeholder="••••••••" />
-                    <button
-                        type="button"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors"
-                    >
-                        {showConfirmPassword ? (
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                                <path d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                        ) : (
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                                <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                        )}
-                    </button>
-                </div>
+          <div className="space-y-0.5">
+            <label className="text-xs font-semibold text-foreground">Batch</label>
+            <select
+              id="batch"
+              value={formData.batch}
+              onChange={handleChange}
+              className="w-full px-4 py-2 input-premium text-foreground font-medium"
+            >
+              <option value="" className="bg-white text-muted-foreground">Select your batch</option>
+              <option value="22" className="bg-white">Batch 22</option>
+              <option value="23" className="bg-white">Batch 23</option>
+              <option value="24" className="bg-white">Batch 24</option>
+              <option value="17" className="bg-white">Batch 25</option>
+              <option value="18" className="bg-white">Batch 26</option>
+              <option value="19" className="bg-white">Batch 27</option>
+              <option value="20" className="bg-white">Batch 28</option>
+            </select>
+          </div>
+
+          <div className="space-y-0.5">
+            <label className="text-xs font-semibold text-foreground">Password</label>
+            <div className="relative">
+              <input type={showPassword ? "text" : "password"} id="password" value={formData.password} onChange={handleChange} className="w-full px-4 py-2 pr-10 input-premium text-foreground placeholder:text-muted-foreground font-medium" placeholder="••••••••" />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors"
+              >
+                {showPassword ? (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                ) : (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
+              </button>
             </div>
+          </div>
+
+          <div className="space-y-0.5">
+            <label className="text-xs font-semibold text-foreground">Confirm Password</label>
+            <div className="relative">
+              <input type={showConfirmPassword ? "text" : "password"} id="confirmPassword" value={formData.confirmPassword} onChange={handleChange} className="w-full px-4 py-2 pr-10 input-premium text-foreground placeholder:text-muted-foreground font-medium" placeholder="••••••••" />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors"
+              >
+                {showConfirmPassword ? (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                ) : (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
+              </button>
+            </div>
+          </div>
         </div>
 
         <button

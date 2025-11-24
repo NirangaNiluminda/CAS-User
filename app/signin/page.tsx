@@ -59,14 +59,12 @@ const SignIn = () => {
                 router.push('/dashboard');
             }
             else {
-                alert('Invalid credentials')
                 toast.error('Invalid credentials');
             }
         }
         catch (error) {
             // console.error('Error during sign in:', error);
-            alert(`An error occurred. Please try again. ${error}`);
-            toast.error('An error occurred. Please try again.');
+            toast.error(`An error occurred. Please try again. ${error}`);
         }
     }
 

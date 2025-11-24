@@ -4,6 +4,7 @@ import { useParams, useRouter } from 'next/navigation'
 
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { toast } from 'sonner';
 
 const SignUp: React.FC = () => {
 
@@ -37,11 +38,15 @@ const SignUp: React.FC = () => {
   }, []);
   const handleSignUp = async () => {
     if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match')
+      toast.error('Passwords do not match', {
+        duration: 2000,
+      });
       return
     }
     if (!formData.batch) {
-      alert('Please select your batch')
+      toast.error('Please select your batch', {
+        duration: 2000,
+      });
       return
     }
 
@@ -57,7 +62,9 @@ const SignUp: React.FC = () => {
       if (response.status === 201 || response.data.success) {
         if (response.data.activationToken) {
           const token = response.data.activationToken;
-          alert(`Registration successful! Please check your email to activate your account.`);
+          toast.success('Registration successful! Please check your email to activate your account.', {
+            duration: 2000,
+          });
           router.push(`/activate?token=${token}`);
         } else {
           // Registration successful, and no activation needed
@@ -65,12 +72,16 @@ const SignUp: React.FC = () => {
         }
       } else {
         // Handle error response
-        alert('Registration failed. Please try again.');
+        toast.error('Registration failed. Please try again.', {
+        duration: 2000,
+      });
       }
     } catch (error) {
       // Handle error
       console.error('Error during registration:', error);
-      alert('An error occurred. Please try again.');
+      toast.error('An error occurred. Please try again.', {
+        duration: 2000,
+      });
     }
   }
 

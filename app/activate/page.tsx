@@ -4,6 +4,7 @@ import axios from 'axios';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation'
 import React, { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 
 const Activate = () => {
@@ -20,23 +21,23 @@ const Activate = () => {
     }, []);
 
     // console.log(token); 
-    
+
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.id]: e.target.value })
     }
     const [apiUrl, setApiUrl] = useState('');
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      // This will run only on the client side
-      if (window.location.hostname === 'localhost') {
-        setApiUrl('http://localhost:4000');
-      } else {
-        setApiUrl( process.env.NEXT_PUBLIC_DEPLOYMENT_URL || 'http://52.64.209.177:4000');
-      }
-    }
-  }, []);
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            // This will run only on the client side
+            if (window.location.hostname === 'localhost') {
+                setApiUrl('http://localhost:4000');
+            } else {
+                setApiUrl(process.env.NEXT_PUBLIC_DEPLOYMENT_URL || 'http://52.64.209.177:4000');
+            }
+        }
+    }, []);
 
     const handleActivate = async () => {
         console.log(formData.activation_code, formData.activation_token);
@@ -47,44 +48,50 @@ const Activate = () => {
             })
 
             if (response.status === 201 || response.data.success) {
-                alert('Account activated successfully!')
+                toast.error('Account activated successfully!', {
+                    duration: 2000,
+                });
                 router.push('/signin');
             } else {
                 // Handle error response
-                alert('Activation failed. Please try again.');
+                toast.error('Activation failed. Please try again.', {
+                    duration: 2000,
+                });
             }
         }
         catch (error) {
             // Handle error
             console.error('Error during activation:', error);
-            alert('An error occurred. Please try again.');
+            toast.error('An error occurred. Please try again.', {
+                duration: 2000,
+            });
         }
-}
+    }
 
-return (
-    <div className='w-full h-screen flex justify-center items-center'>
-        <div className="w-[830px] h-[640px] flex flex-col justify-center items-center gap-[42px]">
-            <div className="self-stretch h-[25px] text-center text-black text-[32px] font-bold font-['Inter']">Activate Account</div>
-            <Image className="w-[273px] h-60" src="/SignIn.png" alt='sign in image' width={380} height={380}  />
-            <div className="self-stretch flex flex-col justify-center items-center gap-[20px]">
-                <div className="flex gap-[86px]">
-                    <div className="h-[68px] relative">
-                        <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Index</label>
-                        <input type="text" id="activation_code" value={formData.activation_code} onChange={handleChange} className="bg-green-200 border border-gray-300 text-black text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 placeholder-black" placeholder="Enter OTP from mail" />
+    return (
+        <div className='w-full h-screen flex justify-center items-center'>
+            <div className="w-[830px] h-[640px] flex flex-col justify-center items-center gap-[42px]">
+                <div className="self-stretch h-[25px] text-center text-black text-[32px] font-bold font-['Inter']">Activate Account</div>
+                <Image className="w-[273px] h-60" src="/SignIn.png" alt='sign in image' width={380} height={380} />
+                <div className="self-stretch flex flex-col justify-center items-center gap-[20px]">
+                    <div className="flex gap-[86px]">
+                        <div className="h-[68px] relative">
+                            <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Index</label>
+                            <input type="text" id="activation_code" value={formData.activation_code} onChange={handleChange} className="bg-green-200 border border-gray-300 text-black text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 placeholder-black" placeholder="Enter OTP from mail" />
+                        </div>
                     </div>
                 </div>
-            </div>
-            <button
-                type="button"
-                onClick={handleActivate}
-                className="focus:outline-none text-black bg-[#0cdc09] hover:bg-green-800 hover:border hover:border-[#0cdc09] focus:ring-4 focus:ring-green-300 font-bold font-['Inter'] tracking-[3.60px] rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-[#0cdc09] dark:hover:bg-transparent dark:focus:ring-green-800 transform transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-lg"
+                <button
+                    type="button"
+                    onClick={handleActivate}
+                    className="focus:outline-none text-black bg-[#0cdc09] hover:bg-green-800 hover:border hover:border-[#0cdc09] focus:ring-4 focus:ring-green-300 font-bold font-['Inter'] tracking-[3.60px] rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-[#0cdc09] dark:hover:bg-transparent dark:focus:ring-green-800 transform transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-lg"
 
-            >
-                Activate
-            </button>
+                >
+                    Activate
+                </button>
+            </div>
         </div>
-    </div>
-);
+    );
 }
 
 export default Activate;
