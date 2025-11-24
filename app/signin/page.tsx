@@ -71,44 +71,85 @@ const SignIn = () => {
     }
 
     return (
-        <div className='w-full h-screen flex justify-center items-center'>
-            <div className="w-[830px] h-[640px] flex flex-col justify-center items-center gap-[42px]">
-                <div className="self-stretch h-[25px] text-center text-black text-[32px] font-bold font-['Inter']">Sign in</div>
-                <Image className="w-[273px] h-60" src="/SignIn.png" alt='sign in image' width={380} height={380} />
-                <div className="self-stretch flex flex-col justify-center items-center gap-[20px]">
-                    <div className="flex gap-[86px]">
-                        <div className="h-[68px] relative">
-                            <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Index</label>
-                            <input type="text" id="registrationNumber" value={formData.registrationNumber} onChange={handleChange} className="bg-green-200 border border-gray-300 text-black text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 placeholder-black" placeholder="EG/XXXX/XXXX" />
+        <div className='w-full h-screen flex justify-center items-center px-4 py-6 overflow-hidden'>
+            {/* Back Button */}
+            <button
+                onClick={() => router.push('/')}
+                className="absolute top-6 left-6 p-3 rounded-xl bg-white/80 backdrop-blur-sm border-2 border-green-100 text-foreground hover:bg-green-50 hover:border-green-200 transition-all duration-300 shadow-lg hover:shadow-xl z-50 group"
+            >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="group-hover:-translate-x-1 transition-transform duration-300">
+                    <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+            </button>
+
+            <div className="w-full max-w-2xl p-10 glass-card rounded-[2rem] flex flex-col justify-center items-center gap-8 animate-in fade-in zoom-in duration-700 premium-shadow">
+                <div className="text-center space-y-2">
+                    <h1 className="text-4xl font-black tracking-tight bg-gradient-to-r from-green-700 to-emerald-600 bg-clip-text text-transparent">Sign in</h1>
+                    <p className="text-muted-foreground text-sm font-medium">Enter your credentials to access your account</p>
+                </div>
+                
+                <div className="relative w-40 h-40 rounded-full overflow-hidden border-4 border-green-100 shadow-xl premium-shadow hover:scale-105 transition-transform duration-500">
+                    <Image className="object-cover" src="/SignIn.png" alt='sign in image' fill />
+                    <div className="absolute inset-0 ring-1 ring-inset ring-green-200/30 rounded-full" />
+                </div>
+
+                <div className="w-full flex flex-col gap-5">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div className="space-y-2">
+                            <label className="text-sm font-semibold text-foreground">Index</label>
+                            <input 
+                                type="text" 
+                                id="registrationNumber" 
+                                value={formData.registrationNumber} 
+                                onChange={handleChange} 
+                                className="w-full px-5 py-3.5 input-premium text-foreground placeholder:text-muted-foreground font-medium" 
+                                placeholder="EG/XXXX/XXXX" 
+                            />
                         </div>
-                        <div className="h-[68px] relative">
-                            <label className="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Password</label>
-                            <input type="password" id="password" value={formData.password} onChange={handleChange} className="bg-green-200 border border-gray-300 text-black text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 placeholder-black" placeholder="Password" />
+                        <div className="space-y-2">
+                            <label className="text-sm font-semibold text-foreground">Password</label>
+                            <input 
+                                type="password" 
+                                id="password" 
+                                value={formData.password} 
+                                onChange={handleChange} 
+                                className="w-full px-5 py-3.5 input-premium text-foreground placeholder:text-muted-foreground font-medium" 
+                                placeholder="••••••••" 
+                            />
                         </div>
                     </div>
-                    <div className="flex justify-between items-center w-full mt-4">
-                        <div className="flex items-center">
-                            <input id="rememberMe" type="radio" checked={rememberMe} onChange={handleRememberMeChange} name="default-radio" className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600" />
-                            <label className="ms-2 text-sm font-medium text-gray-900 dark:text-gray-300">Remember Me</label>
+                    
+                    <div className="flex justify-between items-center w-full">
+                        <div className="flex items-center gap-2">
+                            <input 
+                                id="rememberMe" 
+                                type="checkbox" 
+                                checked={rememberMe} 
+                                onChange={(e) => setRememberMe(e.target.checked)} 
+                                className="w-4 h-4 rounded border-green-300 bg-white text-primary focus:ring-primary" 
+                            />
+                            <label htmlFor="rememberMe" className="text-sm font-medium text-foreground cursor-pointer">Remember Me</label>
                         </div>
-                        <div className="flex items-center">
-                            <div className="w-[169px] h-4 text-black text-xl font-medium font-['Inter'] cursor-pointer">Forgot Password ?</div>
+                        <div className="text-sm font-medium text-primary hover:text-primary/80 cursor-pointer transition-colors">
+                            Forgot Password?
                         </div>
                     </div>
                 </div>
+
                 <button
                     type="button"
                     onClick={handleSignIn}
-                    className="focus:outline-none text-black bg-[#0cdc09] hover:bg-green-800 hover:border hover:border-[#0cdc09] focus:ring-4 focus:ring-green-300 font-bold font-['Inter'] tracking-[3.60px] rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-[#0cdc09] dark:hover:bg-transparent dark:focus:ring-green-800 transform transition-all duration-300 ease-in-out hover:scale-105 hover:shadow-lg"
-
+                    className="w-full py-3.5 px-8 gradient-green text-white font-bold text-lg rounded-2xl shadow-xl shadow-green-300/40 hover:shadow-2xl hover:shadow-green-400/50 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 relative overflow-hidden group"
                 >
-                    Sign in
+                    <span className="relative z-10">Sign in</span>
+                    <div className="absolute inset-0 bg-gradient-to-r from-green-400/0 via-white/20 to-green-400/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
                 </button>
-                <div className="flex flex-row items-center gap-2">
-                    <div className="text-black text-xl font-light font-['Inter']">Don&apos;t have an account?</div>
+
+                <div className="flex flex-row items-center gap-2 text-sm">
+                    <div className="text-muted-foreground font-medium">Don&apos;t have an account?</div>
                     <button
                         onClick={() => router.push('/signup')}
-                        className="text-blue-500 hover:underline text-xl font-bold font-['Inter']"
+                        className="text-primary font-bold hover:underline hover:text-emerald-700 transition-colors"
                     >
                         Sign up
                     </button>
