@@ -131,10 +131,10 @@ const SignUp: React.FC = () => {
               <option value="22" className="bg-white">Batch 22</option>
               <option value="23" className="bg-white">Batch 23</option>
               <option value="24" className="bg-white">Batch 24</option>
-              <option value="17" className="bg-white">Batch 25</option>
-              <option value="18" className="bg-white">Batch 26</option>
-              <option value="19" className="bg-white">Batch 27</option>
-              <option value="20" className="bg-white">Batch 28</option>
+              <option value="25" className="bg-white">Batch 25</option>
+              <option value="26" className="bg-white">Batch 26</option>
+              <option value="27" className="bg-white">Batch 27</option>
+              <option value="28" className="bg-white">Batch 28</option>
             </select>
           </div>
 
