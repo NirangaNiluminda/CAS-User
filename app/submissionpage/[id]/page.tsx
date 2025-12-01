@@ -132,7 +132,29 @@ const SubmissionPage: React.FC = () => {
             : process.env.NEXT_PUBLIC_DEPLOYMENT_URL;
 
         try {
-            // Try to complete the session - use a more generic assignment ID
+            // Get the ACTUAL quiz start time from session storage
+            const savedProgress = sessionStorage.getItem('quizProgress');
+            const actualQuizStartTime = sessionStorage.getItem('quizStartTime');
+
+            let startTime: string;
+
+            if (actualQuizStartTime) {
+                // Use the stored quiz start time
+                startTime = actualQuizStartTime;
+            } else if (savedProgress) {
+                // Fallback to progress data
+                const progress = JSON.parse(savedProgress);
+                startTime = progress.quizStartTime || new Date().toISOString();
+            } else {
+                // Last resort - use current time (not ideal)
+                startTime = new Date().toISOString();
+                console.warn('Quiz start time not found! Using current time.');
+            }
+
+            console.log('Actual quiz start time:', startTime);
+            console.log('Current submission time:', new Date().toISOString());
+
+            // Complete session logic...
             const assignmentId = isQuiz
                 ? quizData?.assignment?._id || id
                 : essayData?.essayAssignment?._id || id;
@@ -151,22 +173,20 @@ const SubmissionPage: React.FC = () => {
 
                     if (sessionResponse.ok) {
                         console.log('Session completed successfully');
-                    } else {
-                        console.warn('Session completion returned non-OK status');
                     }
                 } catch (sessionError) {
                     console.error('Error completing session:', sessionError);
-                    // Continue with submission
                 }
             }
 
-            // Handle submission based on type
+            // Handle Quiz submission
             if (isQuiz) {
                 const answers = JSON.parse(sessionStorage.getItem('selectedAnswerId') || '[]');
+
                 const submissionData = {
                     userId: user?._id,
                     answers: answers,
-                    startTime: new Date().toISOString()
+                    startTime: startTime // ✅ NOW sending the ACTUAL quiz start time!
                 };
 
                 console.log("Quiz submission data:", submissionData);
@@ -176,7 +196,7 @@ const SubmissionPage: React.FC = () => {
                     submissionData,
                     {
                         headers: { 'Content-Type': 'application/json' },
-                        timeout: 10000 // Add timeout to avoid hanging requests
+                        timeout: 10000
                     }
                 );
 
@@ -188,7 +208,9 @@ const SubmissionPage: React.FC = () => {
 
                     router.push(`/scorepage/${id}`);
                 }
-            } else if (isEssay) {
+            }
+            // Handle Essay submission
+            else if (isEssay) {
                 const essayAnswer = sessionStorage.getItem('EssayAnswer');
 
                 // Make sure we have the essay ID
@@ -266,7 +288,6 @@ const SubmissionPage: React.FC = () => {
                 }
             }
         } catch (error) {
-            // console.error('Submission error details:', error);
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
             alert(`An error occurred during submission: ${errorMessage}. Please try again.`);
         } finally {
