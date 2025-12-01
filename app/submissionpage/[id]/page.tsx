@@ -107,6 +107,22 @@ const SubmissionPage: React.FC = () => {
     const handleSubmitClick = () => {
         setIsDialogOpen(true);
     };
+    const cleanupStorage = () => {
+        // Clear all quiz/essay related data from sessionStorage
+        sessionStorage.removeItem('quizProgress');
+        sessionStorage.removeItem('selectedAnswerId');
+        sessionStorage.removeItem('EssayAnswer');
+        sessionStorage.removeItem('quizStartTime');
+        sessionStorage.removeItem('quizEndTime');
+        sessionStorage.removeItem('length');
+        sessionStorage.removeItem('name');
+        sessionStorage.removeItem('studentId');
+        // Clear timeLimit from localStorage
+        localStorage.removeItem('timeLimit');
+
+
+        console.log('Storage cleaned successfully');
+    };
 
     const handleConfirmSubmit = async () => {
         setIsDialogOpen(false);
@@ -166,6 +182,10 @@ const SubmissionPage: React.FC = () => {
 
                 if (response.data.success) {
                     sessionStorage.setItem('score', String(response.data.submission?.score));
+
+                    // ✅ CLEAN ALL QUIZ-RELATED STORAGE
+                    cleanupStorage();
+
                     router.push(`/scorepage/${id}`);
                 }
             } else if (isEssay) {
@@ -208,6 +228,10 @@ const SubmissionPage: React.FC = () => {
 
                     if (data.success) {
                         sessionStorage.setItem('score', String(data.submission?.score));
+
+                        // ✅ CLEAN ALL ESSAY-RELATED STORAGE
+                        cleanupStorage();
+
                         router.push(`/scorepage/${id}`);
                     } else {
                         throw new Error(data.message || "Essay submission failed");
@@ -231,6 +255,10 @@ const SubmissionPage: React.FC = () => {
 
                     if (altResponse.data.success) {
                         sessionStorage.setItem('score', String(altResponse.data.submission?.score));
+
+                        // ✅ CLEAN ALL ESSAY-RELATED STORAGE
+                        cleanupStorage();
+
                         router.push(`/scorepage/${id}`);
                     } else {
                         throw new Error(altResponse.data.message || "Essay submission failed with alternative method");
