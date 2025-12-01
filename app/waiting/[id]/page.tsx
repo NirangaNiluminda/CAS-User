@@ -68,7 +68,33 @@ const WaitingPage = () => {
       }
     }
   }, []);
+  useEffect(() => {
+    const checkIfAlreadyAttempted = async () => {
+      if (!studentId || !assignment?._id || !apiUrl) return;
 
+      try {
+        // Fetch fresh assignment data to check attemptedStudents
+        const endpoint = isQuiz
+          ? `${apiUrl}/api/v1/${assignment._id}`
+          : `${apiUrl}/api/v1/essay/${assignment._id}`;
+
+        const response = await axios.get(endpoint);
+        const assignmentData = isQuiz
+          ? response.data.assignment
+          : response.data.essayAssignment;
+
+        // Check if student has already attempted
+        if (assignmentData?.attemptedStudents?.includes(studentId)) {
+          setIsAttempted(true);
+          toast.error('You have already attempted this assignment.');
+        }
+      } catch (error) {
+        console.error('Error checking attempt status:', error);
+      }
+    };
+
+    checkIfAlreadyAttempted();
+  }, [studentId, assignment?._id, apiUrl, isQuiz]);
   // Fetch assignment details
   useEffect(() => {
     const fetchAssignmentDetails = async () => {
@@ -189,13 +215,7 @@ const WaitingPage = () => {
   // Handle proceed to assignment
   const handleProceed = async () => {
     if (quizStatus !== 'active') {
-      toast.error('Quiz is not active yet');
-      return;
-    }
-
-    // Check if student already attempted
-    if (isAttempted) {
-      toast.error('You have already attempted this assignment.');
+      toast.error('Assignment is not active yet');
       return;
     }
 
@@ -205,7 +225,23 @@ const WaitingPage = () => {
       return;
     }
 
+    // Double-check if already attempted before proceeding
     try {
+      const endpoint = isQuiz
+        ? `${apiUrl}/api/v1/${assignment?._id}`
+        : `${apiUrl}/api/v1/essay/${assignment?._id}`;
+
+      const checkResponse = await axios.get(endpoint);
+      const assignmentData = isQuiz
+        ? checkResponse.data.assignment
+        : checkResponse.data.essayAssignment;
+
+      if (assignmentData?.attemptedStudents?.includes(studentId)) {
+        toast.error('You have already attempted this assignment.');
+        setIsAttempted(true);
+        return;
+      }
+
       // Mark student as attempted before proceeding
       if (isQuiz) {
         await axios.put(`${apiUrl}/api/v1/${assignment?._id}/attemptedStudents`, {
@@ -230,7 +266,7 @@ const WaitingPage = () => {
       // Navigate to quiz page after successfully marking as attempted
       router.push(`/modulepage/${id}`);
     } catch (error) {
-      console.error('Error updating attempted students:', error);
+      console.error('Error in handleProceed:', error);
       toast.error('Failed to start assignment. Please try again.');
     }
   };
@@ -344,10 +380,14 @@ const WaitingPage = () => {
               </div>
               <button
                 onClick={handleProceed}
-                className="w-full py-4 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold text-lg shadow-lg shadow-green-200 transition-all flex items-center justify-center gap-2 group"
+                disabled={isAttempted}
+                className={`w-full py-4 rounded-xl font-semibold text-lg shadow-lg transition-all flex items-center justify-center gap-2 group ${isAttempted
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-green-600 hover:bg-green-700 shadow-green-200'
+                  }`}
               >
-                Start Assignment
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                {isAttempted ? 'Already Attempted' : 'Start Assignment'}
+                {!isAttempted && <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />}
               </button>
             </div>
           )}
